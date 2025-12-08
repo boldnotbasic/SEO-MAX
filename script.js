@@ -936,3 +936,344 @@ document.getElementById('keywordInput').addEventListener('keypress', function(e)
         analyzeWebsite();
     }
 });
+
+// Website Crawler Class
+class WebsiteCrawler {
+    constructor() {
+        this.foundUrls = new Set();
+        this.crawledUrls = new Set();
+        this.urlData = [];
+        this.currentTab = 'all';
+        this.isRunning = false;
+    }
+
+    async startCrawl(baseUrl, options = {}) {
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
+        this.foundUrls.clear();
+        this.crawledUrls.clear();
+        this.urlData = [];
+        
+        const {
+            depth = 1,
+            includeExternal = true,
+            checkRedirects = true,
+            findImages = true
+        } = options;
+
+        try {
+            this.showProgress();
+            this.updateProgress(0, 'Crawling gestart...');
+            
+            await this.crawlPage(baseUrl, baseUrl, depth, {
+                includeExternal,
+                checkRedirects,
+                findImages
+            });
+            
+            this.updateProgress(100, 'Crawling voltooid!');
+            this.displayResults();
+            
+        } catch (error) {
+            console.error('Crawler error:', error);
+            alert(`Crawler fout: ${error.message}`);
+        } finally {
+            this.isRunning = false;
+            setTimeout(() => this.hideProgress(), 1000);
+        }
+    }
+
+    async crawlPage(url, baseUrl, depth, options) {
+        if (depth <= 0 || this.crawledUrls.has(url)) return;
+        
+        this.crawledUrls.add(url);
+        this.updateProgress(
+            (this.crawledUrls.size / Math.max(this.foundUrls.size, 1)) * 100,
+            `Crawling: ${this.getShortUrl(url)}`
+        );
+
+        try {
+            const response = await seoChecker.fetchWithCORS(url);
+            const html = await response.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            
+            // Extract all links
+            const links = doc.querySelectorAll('a[href]');
+            const images = doc.querySelectorAll('img[src]');
+            
+            // Process links
+            for (const link of links) {
+                const href = link.getAttribute('href');
+                if (!href) continue;
+                
+                const absoluteUrl = this.resolveUrl(href, url);
+                if (!absoluteUrl) continue;
+                
+                const isInternal = this.isInternalUrl(absoluteUrl, baseUrl);
+                const urlInfo = {
+                    url: absoluteUrl,
+                    type: 'link',
+                    internal: isInternal,
+                    foundOn: url,
+                    text: link.textContent?.trim() || '',
+                    status: null,
+                    redirectTo: null
+                };
+
+                this.urlData.push(urlInfo);
+                
+                // Add to crawl queue if internal and within depth
+                if (isInternal && depth > 1) {
+                    this.foundUrls.add(absoluteUrl);
+                }
+            }
+
+            // Process images
+            if (options.findImages) {
+                for (const img of images) {
+                    const src = img.getAttribute('src');
+                    if (!src) continue;
+                    
+                    const absoluteUrl = this.resolveUrl(src, url);
+                    if (!absoluteUrl) continue;
+                    
+                    this.urlData.push({
+                        url: absoluteUrl,
+                        type: 'image',
+                        internal: this.isInternalUrl(absoluteUrl, baseUrl),
+                        foundOn: url,
+                        alt: img.getAttribute('alt') || '',
+                        status: null
+                    });
+                }
+            }
+
+        } catch (error) {
+            console.error(`Failed to crawl ${url}:`, error);
+        }
+    }
+
+    resolveUrl(href, baseUrl) {
+        try {
+            return new URL(href, baseUrl).href;
+        } catch {
+            return null;
+        }
+    }
+
+    isInternalUrl(url, baseUrl) {
+        try {
+            const urlObj = new URL(url);
+            const baseObj = new URL(baseUrl);
+            return urlObj.hostname === baseObj.hostname;
+        } catch {
+            return false;
+        }
+    }
+
+    getShortUrl(url) {
+        try {
+            const urlObj = new URL(url);
+            return urlObj.pathname + urlObj.search;
+        } catch {
+            return url;
+        }
+    }
+
+    showProgress() {
+        const progressEl = document.getElementById('crawlerProgress');
+        const resultsEl = document.getElementById('crawlerResults');
+        if (progressEl) progressEl.style.display = 'block';
+        if (resultsEl) resultsEl.style.display = 'none';
+    }
+
+    hideProgress() {
+        const progressEl = document.getElementById('crawlerProgress');
+        if (progressEl) progressEl.style.display = 'none';
+    }
+
+    updateProgress(percent, status) {
+        const fill = document.getElementById('crawlerProgressFill');
+        const statusEl = document.getElementById('crawlerStatus');
+        const countEl = document.getElementById('crawlerCount');
+        
+        if (fill) fill.style.width = percent + '%';
+        if (statusEl) statusEl.textContent = status;
+        if (countEl) countEl.textContent = `${this.urlData.length} URLs gevonden`;
+    }
+
+    displayResults() {
+        const resultsEl = document.getElementById('crawlerResults');
+        if (resultsEl) resultsEl.style.display = 'block';
+        
+        const stats = this.calculateStats();
+        this.updateStats(stats);
+        this.showTab('all');
+    }
+
+    calculateStats() {
+        const total = this.urlData.length;
+        const internal = this.urlData.filter(u => u.internal).length;
+        const external = total - internal;
+        const redirects = this.urlData.filter(u => u.status === 'redirect' || u.redirectTo).length;
+        
+        return { total, internal, external, redirects };
+    }
+
+    updateStats(stats) {
+        const elements = {
+            totalUrls: stats.total,
+            internalUrls: stats.internal,
+            externalUrls: stats.external,
+            redirectUrls: stats.redirects
+        };
+        
+        for (const [id, value] of Object.entries(elements)) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+    }
+
+    showTab(tab) {
+        this.currentTab = tab;
+        
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const activeBtn = document.querySelector(`[onclick="showTab('${tab}')"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        
+        // Filter and display URLs
+        let filteredUrls = this.urlData;
+        
+        switch (tab) {
+            case 'internal':
+                filteredUrls = this.urlData.filter(u => u.internal);
+                break;
+            case 'external':
+                filteredUrls = this.urlData.filter(u => !u.internal);
+                break;
+            case 'redirects':
+                filteredUrls = this.urlData.filter(u => u.status === 'redirect' || u.redirectTo);
+                break;
+            case 'images':
+                filteredUrls = this.urlData.filter(u => u.type === 'image');
+                break;
+        }
+        
+        this.renderUrlList(filteredUrls);
+    }
+
+    renderUrlList(urls) {
+        const container = document.getElementById('urlsList');
+        if (!container) return;
+        
+        if (urls.length === 0) {
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.5);">Geen URLs gevonden in deze categorie</div>';
+            return;
+        }
+        
+        container.innerHTML = urls.map(url => `
+            <div class="url-item">
+                <div class="url-info">
+                    <a href="${url.url}" target="_blank" class="url-link">${url.url}</a>
+                    <div class="url-meta">
+                        ${url.type === 'image' ? `Alt: ${url.alt || 'Geen alt text'}` : ''}
+                        ${url.text ? `Text: ${url.text.substring(0, 50)}${url.text.length > 50 ? '...' : ''}` : ''}
+                        ${url.foundOn ? `Gevonden op: ${this.getShortUrl(url.foundOn)}` : ''}
+                    </div>
+                </div>
+                <div class="url-status">
+                    ${this.getStatusBadge(url)}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    getStatusBadge(url) {
+        if (url.status === 'redirect' || url.redirectTo) {
+            return '<span class="status-badge redirect">Redirect</span>';
+        } else if (url.status === 'error') {
+            return '<span class="status-badge error">Error</span>';
+        } else if (url.status && url.status >= 200 && url.status < 300) {
+            return '<span class="status-badge success">OK</span>';
+        }
+        return '';
+    }
+
+    exportUrls(format) {
+        const data = this.urlData.map(url => ({
+            URL: url.url,
+            Type: url.type,
+            Internal: url.internal ? 'Yes' : 'No',
+            Status: url.status || 'Unknown',
+            'Found On': url.foundOn,
+            Text: url.text || url.alt || ''
+        }));
+
+        if (format === 'csv') {
+            this.downloadCSV(data, 'website-urls.csv');
+        } else {
+            this.downloadTXT(data, 'website-urls.txt');
+        }
+    }
+
+    downloadCSV(data, filename) {
+        const headers = Object.keys(data[0]);
+        const csv = [
+            headers.join(','),
+            ...data.map(row => headers.map(h => `"${row[h] || ''}"`).join(','))
+        ].join('\n');
+        
+        this.downloadFile(csv, filename, 'text/csv');
+    }
+
+    downloadTXT(data, filename) {
+        const txt = data.map(row => row.URL).join('\n');
+        this.downloadFile(txt, filename, 'text/plain');
+    }
+
+    downloadFile(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+}
+
+// Initialize crawler
+const websiteCrawler = new WebsiteCrawler();
+
+// Crawler functions
+function startCrawling() {
+    const url = document.getElementById('crawlerUrl')?.value;
+    const depth = parseInt(document.getElementById('crawlerDepth')?.value) || 1;
+    const includeExternal = document.getElementById('includeExternal')?.checked;
+    const checkRedirects = document.getElementById('checkRedirects')?.checked;
+    const findImages = document.getElementById('findImages')?.checked;
+    
+    if (!url) {
+        alert('Voer een URL in om te crawlen');
+        return;
+    }
+    
+    websiteCrawler.startCrawl(url, {
+        depth,
+        includeExternal,
+        checkRedirects,
+        findImages
+    });
+}
+
+function showTab(tab) {
+    websiteCrawler.showTab(tab);
+}
+
+function exportUrls(format) {
+    websiteCrawler.exportUrls(format);
+}

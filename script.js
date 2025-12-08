@@ -452,6 +452,11 @@ function displayResults(results) {
         safeDisplayFunction(() => displaySummary(), 'Summary');
         
         console.log('All results displayed successfully');
+        
+        // Show save button after successful analysis
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn) saveBtn.style.display = 'inline-flex';
+        
     } catch (error) {
         console.error('Display error:', error);
         // Don't show alert anymore, just log the error
@@ -1320,4 +1325,193 @@ function showTab(tab) {
 
 function exportUrls(format) {
     websiteCrawler.exportUrls(format);
+}
+
+// Save/Load Analysis System
+class AnalysisStorage {
+    constructor() {
+        this.storageKey = 'seomax_saved_analyses';
+        this.maxSaved = 10; // Limit to 10 saved analyses
+        this.loadSavedAnalyses();
+    }
+
+    saveAnalysis(url, keyword, results, score) {
+        const analysis = {
+            id: Date.now().toString(),
+            url: url,
+            keyword: keyword,
+            results: results,
+            score: score,
+            timestamp: new Date().toISOString(),
+            date: new Date().toLocaleDateString('nl-NL'),
+            time: new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        let saved = this.getSavedAnalyses();
+        
+        // Remove oldest if at limit
+        if (saved.length >= this.maxSaved) {
+            saved = saved.slice(-(this.maxSaved - 1));
+        }
+        
+        // Add new analysis at the beginning
+        saved.unshift(analysis);
+        
+        localStorage.setItem(this.storageKey, JSON.stringify(saved));
+        this.displaySavedAnalyses();
+        
+        // Show success notification
+        this.showSaveNotification('Analyse opgeslagen!');
+    }
+
+    getSavedAnalyses() {
+        try {
+            return JSON.parse(localStorage.getItem(this.storageKey)) || [];
+        } catch {
+            return [];
+        }
+    }
+
+    loadAnalysis(id) {
+        const saved = this.getSavedAnalyses();
+        const analysis = saved.find(a => a.id === id);
+        
+        if (!analysis) {
+            alert('Analyse niet gevonden');
+            return;
+        }
+
+        // Fill form fields
+        document.getElementById('urlInput').value = analysis.url;
+        document.getElementById('keywordInput').value = analysis.keyword || '';
+        
+        // Display results
+        seoChecker.results = analysis.results;
+        displayResults(analysis.results);
+        
+        // Show results section
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'block';
+        
+        // Show save button
+        document.getElementById('saveBtn').style.display = 'inline-flex';
+        
+        this.showSaveNotification('Analyse geladen!');
+    }
+
+    deleteAnalysis(id) {
+        if (!confirm('Weet je zeker dat je deze analyse wilt verwijderen?')) {
+            return;
+        }
+
+        let saved = this.getSavedAnalyses();
+        saved = saved.filter(a => a.id !== id);
+        
+        localStorage.setItem(this.storageKey, JSON.stringify(saved));
+        this.displaySavedAnalyses();
+        
+        this.showSaveNotification('Analyse verwijderd');
+    }
+
+    clearAllSaved() {
+        if (!confirm('Weet je zeker dat je alle opgeslagen analyses wilt verwijderen?')) {
+            return;
+        }
+
+        localStorage.removeItem(this.storageKey);
+        this.displaySavedAnalyses();
+        
+        this.showSaveNotification('Alle analyses verwijderd');
+    }
+
+    displaySavedAnalyses() {
+        const saved = this.getSavedAnalyses();
+        const section = document.getElementById('savedAnalysesSection');
+        const list = document.getElementById('savedAnalysesList');
+        
+        if (saved.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        
+        list.innerHTML = saved.map(analysis => `
+            <div class="saved-item">
+                <div class="saved-item-header">
+                    <div class="saved-item-info">
+                        <div class="saved-item-url">${analysis.url}</div>
+                        <div class="saved-item-meta">
+                            <span><i class="fas fa-calendar"></i> ${analysis.date}</span>
+                            <span><i class="fas fa-clock"></i> ${analysis.time}</span>
+                            ${analysis.keyword ? `<span><i class="fas fa-key"></i> ${analysis.keyword}</span>` : ''}
+                            <span class="saved-score ${this.getScoreClass(analysis.score)}">
+                                <i class="fas fa-chart-line"></i> ${analysis.score}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="saved-item-actions">
+                        <button class="load-btn" onclick="analysisStorage.loadAnalysis('${analysis.id}')">
+                            <i class="fas fa-upload"></i> Laden
+                        </button>
+                        <button class="delete-btn" onclick="analysisStorage.deleteAnalysis('${analysis.id}')">
+                            <i class="fas fa-trash"></i> Verwijder
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    getScoreClass(score) {
+        if (score >= 90) return 'excellent';
+        if (score >= 75) return 'good';
+        if (score >= 50) return 'average';
+        return 'poor';
+    }
+
+    showSaveNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'save-notification';
+        notification.innerHTML = `
+            <div class="save-notification-content">
+                <i class="fas fa-check-circle"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+
+    loadSavedAnalyses() {
+        // Load saved analyses on page load
+        setTimeout(() => this.displaySavedAnalyses(), 100);
+    }
+}
+
+// Initialize storage system
+const analysisStorage = new AnalysisStorage();
+
+// Save/Load functions
+function saveAnalysis() {
+    const url = document.getElementById('urlInput').value;
+    const keyword = document.getElementById('keywordInput').value;
+    
+    if (!url || !seoChecker.results) {
+        alert('Geen analyse om op te slaan. Voer eerst een analyse uit.');
+        return;
+    }
+
+    const score = seoChecker.calculateScore();
+    analysisStorage.saveAnalysis(url, keyword, seoChecker.results, score);
+}
+
+function clearAllSaved() {
+    analysisStorage.clearAllSaved();
 }

@@ -11,14 +11,25 @@
 <body>
     <div class="container">
         <header class="header">
-            <div class="header-brand">
-                <div class="brand-icon">
-                    <i class="fas fa-chart-line"></i>
+            <div class="header-content">
+                <div class="header-main">
+                    <h1><i class="fas fa-chart-line"></i> SEO MAX</h1>
+                    <div class="seo-tools-buttons">
+                        <a href="https://ads.google.com/intl/nl_nl/home/tools/keyword-planner/" target="_blank" class="tool-btn keyword-planner">
+                            <i class="fab fa-google"></i>
+                            <span>Keyword Planner</span>
+                        </a>
+                        <a href="https://analytics.google.com/" target="_blank" class="tool-btn analytics">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Analytics</span>
+                        </a>
+                        <a href="https://www.screamingfrog.co.uk/seo-spider/" target="_blank" class="tool-btn screaming-frog">
+                            <i class="fas fa-spider"></i>
+                            <span>Screaming Frog</span>
+                        </a>
+                    </div>
                 </div>
-                <div class="brand-text">
-                    <h1>SEO MAX</h1>
-                    <p>Professionele SEO Analyse Tool</p>
-                </div>
+                <p>Professionele SEO analyse tool voor websites</p>
             </div>
         </header>
 
@@ -58,6 +69,23 @@
         <div id="resultsSection" class="results-section" style="display: none;">
             <h2>SEO Analyse Resultaten</h2>
             
+            <!-- Homepage Preview -->
+            <div class="homepage-preview">
+                <div class="preview-card">
+                    <div class="preview-header">
+                        <h3><i class="fas fa-desktop"></i> Homepage Voorvertoning</h3>
+                        <div class="preview-url" id="previewUrl">--</div>
+                    </div>
+                    <div class="preview-content">
+                        <iframe id="homepageFrame" src="about:blank" frameborder="0" loading="lazy"></iframe>
+                        <div class="preview-overlay" id="previewOverlay">
+                            <i class="fas fa-eye"></i>
+                            <p>Klik om voorvertoning te laden</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Statistics Overview -->
             <div class="stats-overview">
                 <div class="stat-card score-card">
@@ -81,31 +109,36 @@
                     <div class="score-description" id="scoreDescription">Gebaseerd op 8 SEO factoren</div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <h3>CONTENT HEALTH</h3>
-                        <div class="stat-trend positive">+2</div>
+                <div class="stat-card combined-card">
+                    <div class="combined-header">
+                        <h3>CONTENT, TECHNICAL & ISSUES</h3>
                     </div>
-                    <div class="stat-value" id="contentHealth">--</div>
-                    <div class="stat-subtitle" id="contentSubtitle">elements checked</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <h3>TECHNICAL SEO</h3>
-                        <div class="stat-trend" id="techTrend"></div>
+                    <div class="combined-content">
+                        <div class="combined-section">
+                            <div class="section-header">
+                                <span class="section-title">Content Health</span>
+                                <div class="stat-trend positive" id="contentTrend">+2</div>
+                            </div>
+                            <div class="section-value" id="contentHealth">--</div>
+                            <div class="section-subtitle" id="contentSubtitle">elements checked</div>
+                        </div>
+                        <div class="combined-section">
+                            <div class="section-header">
+                                <span class="section-title">Technical SEO</span>
+                                <div class="stat-trend" id="techTrend"></div>
+                            </div>
+                            <div class="section-value" id="techScore">--</div>
+                            <div class="section-subtitle">performance</div>
+                        </div>
+                        <div class="combined-section">
+                            <div class="section-header">
+                                <span class="section-title">Issues Found</span>
+                                <div class="stat-trend" id="issuesTrend"></div>
+                            </div>
+                            <div class="section-value" id="issuesCount">--</div>
+                            <div class="section-subtitle" id="issuesSubtitle">total issues</div>
+                        </div>
                     </div>
-                    <div class="stat-value" id="techScore">--</div>
-                    <div class="stat-subtitle">performance</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <h3>ISSUES FOUND</h3>
-                        <div class="stat-trend" id="issuesTrend"></div>
-                    </div>
-                    <div class="stat-value" id="issuesCount">--</div>
-                    <div class="stat-subtitle" id="issuesSubtitle">total issues</div>
                 </div>
             </div>
 

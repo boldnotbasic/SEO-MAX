@@ -130,15 +130,25 @@ class SEOChecker {
         };
     }
 
-    analyzeH1(doc) {
+    analyzeH1(doc, keyword) {
         const h1Elements = doc.querySelectorAll('h1');
+        const h1Count = h1Elements.length;
         const h1Texts = Array.from(h1Elements).map(h1 => h1.textContent.trim());
         
+        let keywordInH1 = false;
+        if (keyword) {
+            keywordInH1 = h1Texts.some(text => 
+                text.toLowerCase().includes(keyword.toLowerCase())
+            );
+        }
+        
         return {
-            count: h1Elements.length,
-            isOptimal: h1Elements.length === 1,
-            content: h1Texts,
-            hasKeyword: this.keyword ? h1Texts.some(text => text.toLowerCase().includes(this.keyword)) : null
+            count: h1Count,
+            texts: h1Texts,
+            isOptimal: h1Count === 1,
+            keywordPresent: keywordInH1,
+            isEmpty: h1Texts.some(text => text.length === 0),
+            h1List: h1Texts // For popup display
         };
     }
 
@@ -469,6 +479,9 @@ function displayResults(results) {
         const saveBtn = document.getElementById('saveBtn');
         if (saveBtn) saveBtn.style.display = 'inline-flex';
         
+        // Setup homepage preview
+        setupHomepagePreview();
+        
     } catch (error) {
         console.error('Display error:', error);
         // Don't show alert anymore, just log the error
@@ -770,12 +783,12 @@ function displayH1Results(h1) {
     const keywordStatus = h1.hasKeyword === null ? 'success' : (h1.hasKeyword ? 'success' : 'warning');
     
     container.innerHTML = `
-        <div class="result-item ${countStatus}">
+        <div class="result-item ${countStatus} ${h1.count > 0 ? 'clickable' : ''}" ${h1.count > 0 ? `onclick="showH1Popup(${JSON.stringify(h1.h1List).replace(/"/g, '&quot;')})"` : ''}>
             <div class="label">
                 <i class="fas fa-hashtag"></i>
                 Aantal H1 Tags
             </div>
-            <div class="value">${h1.count} (optimaal: 1)</div>
+            <div class="value">${h1.count} (optimaal: 1) ${h1.count > 0 ? '<i class="fas fa-eye" style="margin-left: 8px; opacity: 0.7;"></i>' : ''}</div>
         </div>
         ${h1.count > 0 ? `
         <div class="result-item success">
@@ -1708,5 +1721,118 @@ function copyToClipboard(text) {
         document.execCommand('copy');
         document.body.removeChild(textArea);
         analysisStorage.showSaveNotification(`"${text}" gekopieerd!`);
+    });
+}
+
+// Homepage Preview Setup
+function setupHomepagePreview() {
+    const urlInput = document.getElementById('urlInput');
+    const previewUrl = document.getElementById('previewUrl');
+    const previewOverlay = document.getElementById('previewOverlay');
+    const homepageFrame = document.getElementById('homepageFrame');
+    
+    if (!urlInput || !previewUrl || !previewOverlay || !homepageFrame) return;
+    
+    const currentUrl = urlInput.value.trim();
+    if (!currentUrl || currentUrl.toLowerCase() === 'demo') {
+        previewUrl.textContent = 'Demo mode - geen preview beschikbaar';
+        return;
+    }
+    
+    // Ensure URL has protocol
+    let processedUrl = currentUrl;
+    if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+        processedUrl = 'https://' + processedUrl;
+    }
+    
+    previewUrl.textContent = processedUrl;
+    
+    // Setup click handler for overlay
+    previewOverlay.addEventListener('click', function() {
+        loadHomepagePreview(processedUrl, homepageFrame, previewOverlay);
+    });
+}
+
+function loadHomepagePreview(url, iframe, overlay) {
+    try {
+        // Show loading state
+        overlay.innerHTML = `
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Voorvertoning laden...</p>
+        `;
+        
+        // Load the page in iframe
+        iframe.src = url;
+        
+        // Handle load events
+        iframe.onload = function() {
+            overlay.classList.add('hidden');
+        };
+        
+        iframe.onerror = function() {
+            overlay.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Kan voorvertoning niet laden</p>
+                <small style="opacity: 0.7; margin-top: 8px;">Mogelijk CORS beperking</small>
+            `;
+        };
+        
+        // Timeout fallback
+        setTimeout(() => {
+            if (!overlay.classList.contains('hidden')) {
+                overlay.classList.add('hidden');
+            }
+        }, 5000);
+        
+    } catch (error) {
+        console.error('Preview load error:', error);
+        overlay.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Fout bij laden voorvertoning</p>
+        `;
+    }
+}
+
+// H1 Tags Popup
+function showH1Popup(h1List) {
+    const modal = document.createElement('div');
+    modal.className = 'h1-modal';
+    modal.innerHTML = `
+        <div class="h1-modal-content">
+            <div class="h1-header">
+                <h3><i class="fas fa-hashtag"></i> H1 Tags op de pagina</h3>
+                <button onclick="this.closest('.h1-modal').remove()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="h1-body">
+                <p>Gevonden H1 tags (${h1List.length}):</p>
+                <div class="h1-list">
+                    ${h1List.map((h1Text, index) => `
+                        <div class="h1-item">
+                            <div class="h1-info">
+                                <div class="h1-number">#${index + 1}</div>
+                                <div class="h1-text">${h1Text || '<em>Lege H1 tag</em>'}</div>
+                            </div>
+                            <button onclick="copyToClipboard('${h1Text.replace(/'/g, "\\'")}'); event.stopPropagation();" class="copy-btn" title="Kopieer H1 tekst">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="h1-footer">
+                    <p><i class="fas fa-lightbulb"></i> <strong>SEO Tip:</strong> Gebruik bij voorkeur één unieke H1 tag per pagina die de hoofdinhoud beschrijft.</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
     });
 }

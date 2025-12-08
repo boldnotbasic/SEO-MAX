@@ -662,13 +662,11 @@ function calculateIssues(results) {
     if (results.images.withoutAlt > 0) total++;
     if (!results.canonical.exists) total++;
     if (results.links.broken > 0) { total++; critical++; }
-    
-    return { total, critical };
-}
 
 function updateCircularProgress(score) {
     const circle = document.getElementById('progressCircle');
     const scoreStatus = document.getElementById('scoreStatus');
+    const indicatorFill = document.getElementById('indicatorFill');
     if (!circle || !scoreStatus) return;
     
     const radius = 50;
@@ -703,6 +701,13 @@ function updateCircularProgress(score) {
     setTimeout(() => {
         circle.style.strokeDashoffset = strokeDashoffset;
     }, 500);
+    
+    // Update indicator bar
+    if (indicatorFill) {
+        setTimeout(() => {
+            indicatorFill.style.width = `${score}%`;
+        }, 300);
+    }
 }
 
 function displayStatusResults(status) {
@@ -1761,36 +1766,57 @@ function loadHomepagePreview(url, iframe, overlay) {
             <p>Voorvertoning laden...</p>
         `;
         
-        // Load the page in iframe
+        // Try direct iframe first
         iframe.src = url;
+        
+        let loaded = false;
         
         // Handle load events
         iframe.onload = function() {
+            loaded = true;
             overlay.classList.add('hidden');
         };
         
         iframe.onerror = function() {
-            overlay.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Kan voorvertoning niet laden</p>
-                <small style="opacity: 0.7; margin-top: 8px;">Mogelijk CORS beperking</small>
-            `;
+            if (!loaded) {
+                showPreviewFallback(url, overlay);
+            }
         };
         
-        // Timeout fallback
+        // Timeout fallback for CORS issues
         setTimeout(() => {
-            if (!overlay.classList.contains('hidden')) {
-                overlay.classList.add('hidden');
+            if (!loaded && !overlay.classList.contains('hidden')) {
+                showPreviewFallback(url, overlay);
             }
-        }, 5000);
+        }, 3000);
         
     } catch (error) {
         console.error('Preview load error:', error);
-        overlay.innerHTML = `
-            <i class="fas fa-exclamation-triangle"></i>
-            <p>Fout bij laden voorvertoning</p>
-        `;
+        showPreviewFallback(url, overlay);
     }
+}
+
+function showPreviewFallback(url, overlay) {
+    overlay.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-external-link-alt" style="font-size: 2rem; color: white; margin-bottom: 12px;"></i>
+            <p style="margin: 0 0 12px 0; color: white;">Preview niet beschikbaar</p>
+            <a href="${url}" target="_blank" style="
+                display: inline-block;
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-size: 0.9rem;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                transition: all 0.3s ease;
+            " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'">
+                <i class="fas fa-external-link-alt"></i> Open Website
+            </a>
+            <p style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); margin: 8px 0 0 0;">CORS beperking</p>
+        </div>
+    `;
 }
 
 // H1 Tags Popup

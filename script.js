@@ -188,15 +188,18 @@ class SEOChecker {
         const imagesWithoutAlt = Array.from(images).filter(img => !img.getAttribute('alt'));
         
         // Extract filenames from images without alt text
-        const missingAltImages = imagesWithoutAlt.map(img => {
-            const src = img.getAttribute('src') || '';
-            const filename = src.split('/').pop() || src;
-            return {
-                filename: filename,
-                src: src,
-                fullUrl: img.src || src
-            };
-        });
+        const missingAltImages = imagesWithoutAlt
+            .map(img => {
+                const src = (img.getAttribute('src') || '').trim();
+                const filename = src.split('/').pop() || src;
+                return {
+                    filename: filename,
+                    src: src,
+                    fullUrl: img.src || src
+                };
+            })
+            // Filter entries zonder bruikbare src / bestandsnaam, om lege kaarten te vermijden
+            .filter(img => img.src && img.filename);
         
         return {
             total: totalImages,

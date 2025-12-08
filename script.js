@@ -2377,16 +2377,11 @@ function displaySitewideIssues(issues) {
             </div>
         `;
         
-        // Add click event listener with simple test first
+        // Add click event listener
         issueElement.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             console.log('🔥 CLICK DETECTED! Issue clicked:', index, issue.message);
-            
-            // Simple alert test first
-            alert(`Issue ${index} geklikt: ${issue.message}`);
-            
-            // Then try to show details
             showIssueDetails(index);
         });
         
@@ -2469,69 +2464,65 @@ function showIssueDetails(issueIndex) {
     
     const issue = currentSitewideResults.issues[issueIndex];
     
+    // Use same modal style as existing popups
     const modal = document.createElement('div');
-    modal.className = 'issue-details-modal';
+    modal.className = 'alt-text-modal'; // Reuse existing modal styles
     modal.innerHTML = `
-        <div class="issue-details-modal-content">
-            <div class="issue-details-header">
-                <div class="issue-details-title">
-                    <i class="fas ${issue.type === 'error' ? 'fa-times-circle' : 'fa-exclamation-triangle'} issue-icon ${issue.type}"></i>
-                    <h3>${issue.message}</h3>
-                </div>
-                <button onclick="this.closest('.issue-details-modal').remove()" class="modal-close">
+        <div class="alt-text-modal-content">
+            <div class="alt-text-header">
+                <h3>
+                    <i class="fas ${issue.type === 'error' ? 'fa-times-circle' : 'fa-exclamation-triangle'}" style="color: ${issue.type === 'error' ? '#ef4444' : '#f59e0b'};"></i> 
+                    ${issue.message}
+                </h3>
+                <button onclick="this.closest('.alt-text-modal').remove()" class="modal-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
-            <div class="issue-details-body">
-                <div class="issue-summary">
-                    <div class="issue-stat">
-                        <span class="stat-number">${issue.count}</span>
-                        <span class="stat-text">Pagina${issue.count > 1 ? '\'s' : ''} met dit probleem</span>
+            <div class="alt-text-body">
+                <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: white;">${issue.count}</div>
+                        <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7);">Pagina${issue.count > 1 ? '\'s' : ''} getroffen</div>
                     </div>
-                    <div class="issue-severity ${issue.type}">
+                    <div style="padding: 8px 16px; border-radius: 20px; background: rgba(${issue.type === 'error' ? '239, 68, 68' : '245, 158, 11'}, 0.2); color: ${issue.type === 'error' ? '#ef4444' : '#f59e0b'}; font-weight: 600;">
                         <i class="fas ${issue.type === 'error' ? 'fa-exclamation-circle' : 'fa-exclamation-triangle'}"></i>
                         ${issue.type === 'error' ? 'Kritiek' : 'Waarschuwing'}
                     </div>
                 </div>
                 
-                <div class="issue-description">
-                    <h4><i class="fas fa-info-circle"></i> Wat betekent dit?</h4>
-                    <p>${getIssueDescription(issue.message)}</p>
-                </div>
+                <p><strong><i class="fas fa-info-circle"></i> Wat betekent dit?</strong></p>
+                <p style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.9);">${getIssueDescription(issue.message)}</p>
                 
-                <div class="affected-pages">
-                    <h4><i class="fas fa-list"></i> Getroffen pagina's (${issue.pages.length})</h4>
-                    <div class="pages-list">
-                        ${issue.pages.map(url => `
-                            <div class="affected-page-item">
-                                <div class="page-url">
-                                    <i class="fas fa-link"></i>
-                                    <a href="${url}" target="_blank">${getShortUrl(url)}</a>
-                                </div>
-                                <div class="page-actions">
-                                    <button onclick="analyzeSinglePage('${url}')" class="analyze-page-btn">
-                                        <i class="fas fa-search"></i> Analyseer
-                                    </button>
-                                    <button onclick="copyToClipboard('${url}')" class="copy-url-btn">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
+                <p><strong><i class="fas fa-list"></i> Getroffen pagina's (${issue.pages.length}):</strong></p>
+                <div class="missing-images-list">
+                    ${issue.pages.map((url, index) => `
+                        <div class="missing-image-item">
+                            <div class="image-info">
+                                <i class="fas fa-link" style="color: #60a5fa;"></i>
+                                <div class="image-details">
+                                    <div class="image-filename">
+                                        <a href="${url}" target="_blank" style="color: #60a5fa; text-decoration: none;">${getShortUrl(url)}</a>
+                                    </div>
+                                    <div class="image-path" style="font-size: 0.8rem; opacity: 0.7;">${url}</div>
                                 </div>
                             </div>
-                        `).join('')}
-                    </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="analyzeSinglePage('${url}')" class="copy-btn" title="Analyseer deze pagina" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button onclick="copyToClipboard('${url}')" class="copy-btn" title="Kopieer URL">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
                 
-                <div class="issue-recommendations">
-                    <h4><i class="fas fa-lightbulb"></i> Hoe op te lossen?</h4>
-                    <div class="recommendations-list">
-                        ${getIssueRecommendations(issue.message).map(rec => `
-                            <div class="recommendation-item">
-                                <i class="fas fa-check"></i>
-                                <span>${rec}</span>
-                            </div>
-                        `).join('')}
-                    </div>
+                <div class="alt-text-footer">
+                    <p><i class="fas fa-lightbulb"></i> <strong>Hoe op te lossen:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px; color: rgba(255, 255, 255, 0.9);">
+                        ${getIssueRecommendations(issue.message).map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
                 </div>
             </div>
         </div>
@@ -2611,10 +2602,20 @@ function analyzeSinglePage(url) {
     analyzeWebsite();
     
     // Close modal
-    document.querySelector('.issue-details-modal')?.remove();
+    document.querySelector('.alt-text-modal')?.remove();
     
     // Scroll to results
     setTimeout(() => {
         document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth' });
     }, 500);
+}
+
+// Helper function for URL display
+function getShortUrl(url) {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.pathname + urlObj.search;
+    } catch {
+        return url;
+    }
 }

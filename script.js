@@ -1724,21 +1724,22 @@ function copyToClipboard(text) {
 
 // Homepage Preview Setup
 function setupHomepagePreview() {
-    const urlInput = document.getElementById('urlInput');
     const previewUrl = document.getElementById('previewUrl');
     const previewOverlay = document.getElementById('previewOverlay');
     const homepageFrame = document.getElementById('homepageFrame');
     
-    if (!urlInput || !previewUrl || !previewOverlay || !homepageFrame) return;
+    if (!previewUrl || !previewOverlay || !homepageFrame) return;
     
-    const currentUrl = urlInput.value.trim();
-    if (!currentUrl || currentUrl.toLowerCase() === 'demo') {
+    // Get the URL from the analysis results instead of the input field
+    const analyzedUrl = seoChecker.results?.url;
+    
+    if (!analyzedUrl || analyzedUrl.toLowerCase().includes('demo')) {
         previewUrl.textContent = 'Demo mode - geen preview beschikbaar';
         return;
     }
     
     // Ensure URL has protocol
-    let processedUrl = currentUrl;
+    let processedUrl = analyzedUrl;
     if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
         processedUrl = 'https://' + processedUrl;
     }
@@ -1748,10 +1749,8 @@ function setupHomepagePreview() {
     previewUrl.style.cursor = 'pointer';
     previewUrl.title = 'Klik om website te openen';
     
-    // Setup click handler for overlay
-    previewOverlay.addEventListener('click', function() {
-        loadHomepagePreview(processedUrl, homepageFrame, previewOverlay);
-    });
+    // Automatically load the preview without requiring a click
+    loadHomepagePreview(processedUrl, homepageFrame, previewOverlay);
 }
 
 function loadHomepagePreview(url, iframe, overlay) {

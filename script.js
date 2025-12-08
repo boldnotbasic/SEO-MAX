@@ -678,25 +678,23 @@ function updateCircularProgress(score) {
     const progress = score / 100;
     const strokeDashoffset = circumference - (progress * circumference);
     
-    // Set color based on score
-    let className = 'progress-ring-fill ';
+    // Set color based on score (jouw gewenste ranges)
+    let strokeColor = '';
     let statusText = '';
     
-    if (score >= 90) {
-        className += 'excellent';
-        statusText = 'SEO Score: Uitstekend';
-    } else if (score >= 75) {
-        className += 'good';
+    if (score >= 70) {
+        strokeColor = '#22c55e'; // Groen
         statusText = 'SEO Score: Goed';
     } else if (score >= 50) {
-        className += 'average';
+        strokeColor = '#f97316'; // Oranje  
         statusText = 'SEO Score: Gemiddeld';
     } else {
-        className += 'poor';
+        strokeColor = '#ef4444'; // Rood
         statusText = 'SEO Score: Slecht';
     }
     
-    circle.className = className;
+    // Set stroke color and status
+    circle.style.stroke = strokeColor;
     scoreStatus.textContent = statusText;
     
     // Animate the circle with a delay for visual effect
@@ -1758,37 +1756,75 @@ function loadHomepagePreview(url, iframe, overlay) {
         // Show loading state
         overlay.innerHTML = `
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Voorvertoning laden...</p>
+            <p>Screenshot laden...</p>
         `;
         
-        // Try direct iframe first
-        iframe.src = url;
-        
-        let loaded = false;
-        
-        // Handle load events
-        iframe.onload = function() {
-            loaded = true;
-            overlay.classList.add('hidden');
-        };
-        
-        iframe.onerror = function() {
-            if (!loaded) {
-                showPreviewFallback(url, overlay);
-            }
-        };
-        
-        // Timeout fallback for CORS issues
-        setTimeout(() => {
-            if (!loaded && !overlay.classList.contains('hidden')) {
-                showPreviewFallback(url, overlay);
-            }
-        }, 3000);
+        // Use screenshot API instead of iframe
+        loadScreenshot(url, iframe, overlay);
         
     } catch (error) {
         console.error('Preview load error:', error);
         showPreviewFallback(url, overlay);
     }
+}
+
+function loadScreenshot(url, iframe, overlay) {
+    // Use free screenshot services
+    const screenshotServices = [
+        `https://api.thumbnail.ws/api/f7e5b7e4e4e5b4e4e4e4e4e4e4e4e4e4e4e4e4e4/thumbnail/get?url=${encodeURIComponent(url)}&width=1200`,
+        `https://mini.s-shot.ru/1024x768/JPEG/1024/Z100/?${encodeURIComponent(url)}`,
+        `https://image.thum.io/get/width/1200/crop/800/${encodeURIComponent(url)}`
+    ];
+    
+    // Replace iframe with image
+    const img = document.createElement('img');
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '8px';
+    img.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+    
+    let serviceIndex = 0;
+    let loaded = false;
+    
+    function tryNextService() {
+        if (serviceIndex >= screenshotServices.length) {
+            // All services failed, show fallback
+            showPreviewFallback(url, overlay);
+            return;
+        }
+        
+        const screenshotUrl = screenshotServices[serviceIndex];
+        
+        img.onload = function() {
+            if (!loaded) {
+                loaded = true;
+                // Replace iframe with image
+                iframe.style.display = 'none';
+                iframe.parentNode.appendChild(img);
+                overlay.classList.add('hidden');
+            }
+        };
+        
+        img.onerror = function() {
+            if (!loaded) {
+                serviceIndex++;
+                setTimeout(tryNextService, 500); // Small delay between attempts
+            }
+        };
+        
+        // Set timeout for each service
+        setTimeout(() => {
+            if (!loaded && serviceIndex === screenshotServices.indexOf(screenshotUrl)) {
+                serviceIndex++;
+                tryNextService();
+            }
+        }, 5000);
+        
+        img.src = screenshotUrl;
+    }
+    
+    tryNextService();
 }
 
 function showPreviewFallback(url, overlay) {

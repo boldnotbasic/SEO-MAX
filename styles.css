@@ -2017,6 +2017,22 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.preview-url-small:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+.preview-url-small a {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+.preview-url-small a:hover {
+    color: inherit !important;
 }
 
 .preview-content-compact {

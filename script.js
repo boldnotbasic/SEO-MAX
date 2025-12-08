@@ -778,7 +778,7 @@ function displayTitleResults(title) {
 function displayH1Results(h1) {
     const container = document.getElementById('h1Results');
     const countStatus = h1.isOptimal ? 'success' : (h1.count === 0 ? 'error' : 'warning');
-    const keywordStatus = h1.hasKeyword === null ? 'success' : (h1.hasKeyword ? 'success' : 'warning');
+    const keywordStatus = h1.keywordPresent === null ? 'success' : (h1.keywordPresent ? 'success' : 'warning');
     
     container.innerHTML = `
         <div class="result-item ${countStatus} ${h1.count > 0 ? 'clickable' : ''}" ${h1.count > 0 ? `onclick="showH1Popup(${JSON.stringify(h1.h1List).replace(/"/g, '&quot;')})"` : ''}>
@@ -794,7 +794,7 @@ function displayH1Results(h1) {
                 <i class="fas fa-list"></i>
                 H1 Inhoud
             </div>
-            <div class="value">${h1.content.join(', ')}</div>
+            <div class="value">${h1.texts ? h1.texts.join(', ') : 'Geen H1 content'}</div>
         </div>
         ${seoChecker.keyword ? `
         <div class="result-item ${keywordStatus}">
@@ -802,7 +802,7 @@ function displayH1Results(h1) {
                 <i class="fas fa-key"></i>
                 Zoekwoord in H1
             </div>
-            <div class="value">${h1.hasKeyword ? 'Gevonden' : 'Niet gevonden'}</div>
+            <div class="value">${h1.keywordPresent ? 'Gevonden' : 'Niet gevonden'}</div>
         </div>
         ` : ''}
         ` : ''}
@@ -1743,7 +1743,10 @@ function setupHomepagePreview() {
         processedUrl = 'https://' + processedUrl;
     }
     
-    previewUrl.textContent = processedUrl;
+    // Make preview URL clickable
+    previewUrl.innerHTML = `<a href="${processedUrl}" target="_blank" style="color: inherit; text-decoration: none;">${processedUrl}</a>`;
+    previewUrl.style.cursor = 'pointer';
+    previewUrl.title = 'Klik om website te openen';
     
     // Setup click handler for overlay
     previewOverlay.addEventListener('click', function() {

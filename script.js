@@ -662,6 +662,9 @@ function calculateIssues(results) {
     if (results.images.withoutAlt > 0) total++;
     if (!results.canonical.exists) total++;
     if (results.links.broken > 0) { total++; critical++; }
+    
+    return { total, critical };
+}
 
 function updateCircularProgress(score) {
     const circle = document.getElementById('progressCircle');

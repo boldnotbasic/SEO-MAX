@@ -404,18 +404,23 @@ function showDemoResults(keyword) {
 }
 
 function displayResults(results) {
-    displayDashboardStats(results);
-    displayCoreVitals(results);
-    displayTopIssues(results);
-    displayStatusResults(results.status);
-    displayTitleResults(results.title);
-    displayH1Results(results.h1);
-    displayMetaResults(results.meta);
-    displayImageResults(results.images);
-    displayCanonicalResults(results.canonical);
-    displayLinksResults(results.links);
-    displayURLResults(results.urlStructure);
-    displaySummary();
+    try {
+        displayDashboardStats(results);
+        displayCoreVitals(results);
+        displayTopIssues(results);
+        displayStatusResults(results.status);
+        displayTitleResults(results.title);
+        displayH1Results(results.h1);
+        displayMetaResults(results.meta);
+        displayImageResults(results.images);
+        displayCanonicalResults(results.canonical);
+        displayLinksResults(results.links);
+        displayURLResults(results.urlStructure);
+        displaySummary();
+    } catch (error) {
+        console.error('Display error:', error);
+        alert('Fout bij weergeven van resultaten. Probeer opnieuw.');
+    }
 }
 
 function displayDashboardStats(results) {

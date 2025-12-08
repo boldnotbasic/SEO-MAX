@@ -1299,25 +1299,88 @@ class WebsiteCrawler {
 const websiteCrawler = new WebsiteCrawler();
 
 // Crawler functions
+let selectedCrawlerUrl = '';
+
+function useMainUrl() {
+    const mainUrl = document.getElementById('urlInput').value.trim();
+    
+    if (!mainUrl || mainUrl.toLowerCase() === 'demo') {
+        showErrorMessage('Geen geldige URL gevonden', 'Voer eerst een URL in het bovenste veld in');
+        return;
+    }
+    
+    // Ensure URL has protocol
+    let processedUrl = mainUrl;
+    if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+        processedUrl = 'https://' + processedUrl;
+    }
+    
+    selectedCrawlerUrl = processedUrl;
+    
+    // Update display
+    const displayEl = document.getElementById('crawlerUrlDisplay');
+    if (displayEl) {
+        displayEl.textContent = processedUrl;
+        displayEl.classList.remove('empty');
+    }
+    
+    // Enable crawl button
+    const crawlBtn = document.getElementById('crawlBtn');
+    if (crawlBtn) {
+        crawlBtn.disabled = false;
+    }
+    
+    // Show success notification
+    analysisStorage.showSaveNotification('URL geselecteerd voor crawling!');
+}
+
 function startCrawling() {
-    const url = document.getElementById('crawlerUrl')?.value;
+    if (!selectedCrawlerUrl) {
+        showErrorMessage('Geen URL geselecteerd', 'Klik eerst op "Gebruik URL hierboven"');
+        return;
+    }
+    
     const depth = parseInt(document.getElementById('crawlerDepth')?.value) || 1;
     const includeExternal = document.getElementById('includeExternal')?.checked;
     const checkRedirects = document.getElementById('checkRedirects')?.checked;
     const findImages = document.getElementById('findImages')?.checked;
     
-    if (!url) {
-        alert('Voer een URL in om te crawlen');
-        return;
-    }
-    
-    websiteCrawler.startCrawl(url, {
+    websiteCrawler.startCrawl(selectedCrawlerUrl, {
         depth,
         includeExternal,
         checkRedirects,
         findImages
     });
 }
+
+// Initialize crawler UI
+document.addEventListener('DOMContentLoaded', function() {
+    // Disable crawl button initially
+    const crawlBtn = document.getElementById('crawlBtn');
+    if (crawlBtn) {
+        crawlBtn.disabled = true;
+    }
+    
+    // Monitor main URL input for changes
+    const urlInput = document.getElementById('urlInput');
+    if (urlInput) {
+        urlInput.addEventListener('input', function() {
+            // Reset crawler URL when main URL changes
+            selectedCrawlerUrl = '';
+            const displayEl = document.getElementById('crawlerUrlDisplay');
+            if (displayEl) {
+                displayEl.textContent = 'Geen URL geselecteerd';
+                displayEl.classList.add('empty');
+            }
+            
+            // Disable crawl button
+            const crawlBtn = document.getElementById('crawlBtn');
+            if (crawlBtn) {
+                crawlBtn.disabled = true;
+            }
+        });
+    }
+});
 
 function showTab(tab) {
     websiteCrawler.showTab(tab);

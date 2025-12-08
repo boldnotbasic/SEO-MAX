@@ -177,11 +177,17 @@
                     
                     <div class="crawler-controls">
                         <div class="crawler-input-group">
-                            <input type="url" id="crawlerUrl" placeholder="Website URL (bijv. https://example.com)" required>
+                            <button id="useMainUrlBtn" onclick="useMainUrl()" class="use-url-btn">
+                                <i class="fas fa-arrow-down"></i> Gebruik URL hierboven
+                            </button>
                             <input type="number" id="crawlerDepth" placeholder="Diepte (1-3)" min="1" max="3" value="1">
                             <button id="crawlBtn" onclick="startCrawling()">
                                 <i class="fas fa-search"></i> Crawl Website
                             </button>
+                        </div>
+                        <div class="crawler-url-display">
+                            <span class="url-label">Te crawlen URL:</span>
+                            <span id="crawlerUrlDisplay" class="url-display">Geen URL geselecteerd</span>
                         </div>
                         <div class="crawler-options">
                             <label><input type="checkbox" id="includeExternal" checked> Externe links</label>

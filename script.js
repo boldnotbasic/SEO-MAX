@@ -2377,11 +2377,16 @@ function displaySitewideIssues(issues) {
             </div>
         `;
         
-        // Add click event listener
+        // Add click event listener with simple test first
         issueElement.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Issue clicked:', index, issue.message);
+            console.log('🔥 CLICK DETECTED! Issue clicked:', index, issue.message);
+            
+            // Simple alert test first
+            alert(`Issue ${index} geklikt: ${issue.message}`);
+            
+            // Then try to show details
             showIssueDetails(index);
         });
         
@@ -2415,6 +2420,31 @@ function showSitewideError(message) {
 function testIssueClick() {
     alert('JavaScript werkt! Issue click test succesvol.');
     console.log('Test function called successfully');
+}
+
+// Test modal function
+function testModal() {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    modal.innerHTML = `
+        <div style="background: white; padding: 20px; border-radius: 8px; color: black;">
+            <h3>Test Modal</h3>
+            <p>Als je dit ziet, werkt het modal systeem!</p>
+            <button onclick="this.closest('div').parentElement.remove()">Sluiten</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
 }
 
 // Global function to test issue details

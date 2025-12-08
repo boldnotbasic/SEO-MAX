@@ -307,11 +307,41 @@ async function analyzeWebsite() {
         resultsSection.style.display = 'block';
     } catch (error) {
         console.error('Analysis error:', error);
-        alert(`Fout: ${error.message}\n\n🎮 Tip: Typ 'demo' in de URL om een voorbeeld te zien\n🌐 Voor echte websites: Deploy naar Vercel/Netlify voor CORS ondersteuning`);
+        
+        // Show error in a less intrusive way
+        showErrorMessage(`Analyse fout: ${error.message}`, 'Probeer demo mode door "demo" in te typen');
+        
         loadingSection.style.display = 'none';
     } finally {
         analyzeBtn.disabled = false;
     }
+}
+
+function showErrorMessage(title, subtitle) {
+    // Create error notification instead of alert
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-notification';
+    errorDiv.innerHTML = `
+        <div class="error-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div class="error-text">
+                <strong>${title}</strong>
+                <p>${subtitle}</p>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="error-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(errorDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (errorDiv.parentElement) {
+            errorDiv.remove();
+        }
+    }, 5000);
 }
 
 function showDemoResults(keyword) {
@@ -405,21 +435,35 @@ function showDemoResults(keyword) {
 
 function displayResults(results) {
     try {
-        displayDashboardStats(results);
-        displayCoreVitals(results);
-        displayTopIssues(results);
-        displayStatusResults(results.status);
-        displayTitleResults(results.title);
-        displayH1Results(results.h1);
-        displayMetaResults(results.meta);
-        displayImageResults(results.images);
-        displayCanonicalResults(results.canonical);
-        displayLinksResults(results.links);
-        displayURLResults(results.urlStructure);
-        displaySummary();
+        console.log('Displaying results:', results);
+        
+        // Safe display with individual error handling
+        safeDisplayFunction(() => displayDashboardStats(results), 'Dashboard Stats');
+        safeDisplayFunction(() => displayCoreVitals(results), 'Core Vitals');
+        safeDisplayFunction(() => displayTopIssues(results), 'Top Issues');
+        safeDisplayFunction(() => displayStatusResults(results.status), 'Status Results');
+        safeDisplayFunction(() => displayTitleResults(results.title), 'Title Results');
+        safeDisplayFunction(() => displayH1Results(results.h1), 'H1 Results');
+        safeDisplayFunction(() => displayMetaResults(results.meta), 'Meta Results');
+        safeDisplayFunction(() => displayImageResults(results.images), 'Image Results');
+        safeDisplayFunction(() => displayCanonicalResults(results.canonical), 'Canonical Results');
+        safeDisplayFunction(() => displayLinksResults(results.links), 'Links Results');
+        safeDisplayFunction(() => displayURLResults(results.urlStructure), 'URL Results');
+        safeDisplayFunction(() => displaySummary(), 'Summary');
+        
+        console.log('All results displayed successfully');
     } catch (error) {
         console.error('Display error:', error);
-        alert('Fout bij weergeven van resultaten. Probeer opnieuw.');
+        // Don't show alert anymore, just log the error
+    }
+}
+
+function safeDisplayFunction(displayFunc, name) {
+    try {
+        displayFunc();
+    } catch (error) {
+        console.warn(`Failed to display ${name}:`, error);
+        // Continue with other displays instead of stopping
     }
 }
 

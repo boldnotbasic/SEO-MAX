@@ -966,6 +966,80 @@ body {
     color: #fca5a5;
 }
 
+/* Error Notification */
+.error-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(220, 38, 38, 0.3);
+    z-index: 10000;
+    animation: slideInRight 0.4s ease;
+    max-width: 400px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.error-content {
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: white;
+}
+
+.error-content i {
+    color: #fecaca;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.error-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.error-text strong {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    color: white;
+}
+
+.error-text p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.error-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.error-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .crawler-input-group {
@@ -985,6 +1059,13 @@ body {
     
     .results-stats {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .error-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
     }
 }
 

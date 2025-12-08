@@ -427,50 +427,66 @@ function displayDashboardStats(results) {
     const score = seoChecker.calculateScore();
     
     // SEO Score with Circular Progress
-    document.getElementById('scoreValue').textContent = score;
-    updateCircularProgress(score);
+    const scoreElement = document.getElementById('scoreValue');
+    if (scoreElement) {
+        scoreElement.textContent = score;
+        updateCircularProgress(score);
+    }
     
     const scoreTrend = document.getElementById('scoreTrend');
-    if (score >= 80) {
-        scoreTrend.textContent = '+' + Math.floor(Math.random() * 5 + 1);
-        scoreTrend.className = 'stat-trend positive';
-    } else if (score >= 60) {
-        scoreTrend.textContent = '±0';
-        scoreTrend.className = 'stat-trend neutral';
-    } else {
-        scoreTrend.textContent = '-' + Math.floor(Math.random() * 3 + 1);
-        scoreTrend.className = 'stat-trend';
+    if (scoreTrend) {
+        if (score >= 80) {
+            scoreTrend.textContent = '+' + Math.floor(Math.random() * 5 + 1);
+            scoreTrend.className = 'stat-trend positive';
+        } else if (score >= 60) {
+            scoreTrend.textContent = '±0';
+            scoreTrend.className = 'stat-trend neutral';
+        } else {
+            scoreTrend.textContent = '-' + Math.floor(Math.random() * 3 + 1);
+            scoreTrend.className = 'stat-trend';
+        }
     }
     
     // Content Health
     const contentElements = [results.title, results.h1, results.meta].filter(Boolean);
     const contentScore = contentElements.filter(el => el.exists || el.count > 0).length;
-    document.getElementById('contentHealth').textContent = contentScore;
-    document.getElementById('contentSubtitle').textContent = `${contentElements.length} elements checked`;
+    const contentHealthEl = document.getElementById('contentHealth');
+    const contentSubtitleEl = document.getElementById('contentSubtitle');
+    if (contentHealthEl) contentHealthEl.textContent = contentScore;
+    if (contentSubtitleEl) contentSubtitleEl.textContent = `${contentElements.length} elements checked`;
     
     // Technical SEO
     const techScore = Math.round((results.images.percentage + (results.canonical.exists ? 100 : 0) + (results.links.broken === 0 ? 100 : 50)) / 3);
-    document.getElementById('techScore').textContent = techScore + '%';
+    const techScoreEl = document.getElementById('techScore');
+    if (techScoreEl) techScoreEl.textContent = techScore + '%';
+    
     const techTrend = document.getElementById('techTrend');
-    if (techScore >= 80) {
-        techTrend.textContent = '+2';
-        techTrend.className = 'stat-trend positive';
-    } else {
-        techTrend.textContent = '-1';
-        techTrend.className = 'stat-trend';
+    if (techTrend) {
+        if (techScore >= 80) {
+            techTrend.textContent = '+2';
+            techTrend.className = 'stat-trend positive';
+        } else {
+            techTrend.textContent = '-1';
+            techTrend.className = 'stat-trend';
+        }
     }
     
     // Issues Count
     const issues = calculateIssues(results);
-    document.getElementById('issuesCount').textContent = issues.total;
-    document.getElementById('issuesSubtitle').textContent = `${issues.critical} critical`;
+    const issuesCountEl = document.getElementById('issuesCount');
+    const issuesSubtitleEl = document.getElementById('issuesSubtitle');
+    if (issuesCountEl) issuesCountEl.textContent = issues.total;
+    if (issuesSubtitleEl) issuesSubtitleEl.textContent = `${issues.critical} critical`;
+    
     const issuesTrend = document.getElementById('issuesTrend');
-    if (issues.total <= 2) {
-        issuesTrend.textContent = '-1';
-        issuesTrend.className = 'stat-trend positive';
-    } else {
-        issuesTrend.textContent = '+' + Math.floor(issues.total / 2);
-        issuesTrend.className = 'stat-trend';
+    if (issuesTrend) {
+        if (issues.total <= 2) {
+            issuesTrend.textContent = '-1';
+            issuesTrend.className = 'stat-trend positive';
+        } else {
+            issuesTrend.textContent = '+' + Math.floor(issues.total / 2);
+            issuesTrend.className = 'stat-trend';
+        }
     }
 }
 
@@ -478,21 +494,26 @@ function displayCoreVitals(results) {
     // Title Optimization
     const titleScore = results.title.isOptimal ? 100 : (results.title.exists ? 60 : 0);
     updateVitalBar('titleProgress', titleScore);
-    document.getElementById('titleScore').textContent = titleScore + '%';
+    const titleScoreEl = document.getElementById('titleScore');
+    if (titleScoreEl) titleScoreEl.textContent = titleScore + '%';
     
     // Meta Description
     const metaScore = results.meta.isOptimal ? 100 : (results.meta.exists ? 70 : 0);
     updateVitalBar('metaProgress', metaScore);
-    document.getElementById('metaScore').textContent = metaScore + '%';
+    const metaScoreEl = document.getElementById('metaScore');
+    if (metaScoreEl) metaScoreEl.textContent = metaScore + '%';
     
     // Image Alt Text
     const imageScore = results.images.percentage;
     updateVitalBar('imageProgress', imageScore);
-    document.getElementById('imageScore').textContent = imageScore + '%';
+    const imageScoreEl = document.getElementById('imageScore');
+    if (imageScoreEl) imageScoreEl.textContent = imageScore + '%';
 }
 
 function updateVitalBar(elementId, score) {
     const progressBar = document.getElementById(elementId);
+    if (!progressBar) return;
+    
     let className = 'vital-progress ';
     
     if (score >= 90) className += 'great';
@@ -532,6 +553,8 @@ function displayTopIssues(results) {
     }
     
     const topIssuesContainer = document.getElementById('topIssues');
+    if (!topIssuesContainer) return;
+    
     if (issues.length === 0) {
         topIssuesContainer.innerHTML = '<div class="issue-item notice"><div class="issue-text"><i class="fas fa-check"></i> No major issues found</div></div>';
     } else {
@@ -572,15 +595,14 @@ function calculateIssues(results) {
 function updateCircularProgress(score) {
     const circle = document.getElementById('progressCircle');
     const scoreStatus = document.getElementById('scoreStatus');
+    if (!circle || !scoreStatus) return;
+    
     const radius = 50;
     const circumference = 2 * Math.PI * radius;
     
     // Calculate progress
     const progress = score / 100;
     const strokeDashoffset = circumference - (progress * circumference);
-    
-    // Set the stroke-dashoffset to animate the circle
-    circle.style.strokeDashoffset = strokeDashoffset;
     
     // Set color based on score
     let className = 'progress-ring-fill ';

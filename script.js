@@ -2353,14 +2353,17 @@ function displaySitewideIssues(issues) {
         return;
     }
     
-    container.innerHTML = issues.map(issue => `
-        <div class="sitewide-issue-item ${issue.type}">
+    container.innerHTML = issues.map((issue, index) => `
+        <div class="sitewide-issue-item ${issue.type} clickable" onclick="showIssueDetails(${index})">
             <div class="issue-info">
                 <div class="issue-message">
                     <i class="fas ${issue.type === 'error' ? 'fa-times-circle' : 'fa-exclamation-triangle'}"></i>
                     ${issue.message}
                 </div>
                 <div class="issue-count">${issue.count} pagina${issue.count > 1 ? '\'s' : ''}</div>
+            </div>
+            <div class="issue-arrow">
+                <i class="fas fa-chevron-right"></i>
             </div>
         </div>
     `).join('');
@@ -2385,4 +2388,162 @@ function displaySitewideRecommendations(recommendations) {
 
 function showSitewideError(message) {
     showErrorMessage('Sitewide Analyse Fout', message);
+}
+
+function showIssueDetails(issueIndex) {
+    if (!currentSitewideResults || !currentSitewideResults.issues[issueIndex]) {
+        showErrorMessage('Issue niet gevonden', 'Kan issue details niet laden');
+        return;
+    }
+    
+    const issue = currentSitewideResults.issues[issueIndex];
+    
+    const modal = document.createElement('div');
+    modal.className = 'issue-details-modal';
+    modal.innerHTML = `
+        <div class="issue-details-modal-content">
+            <div class="issue-details-header">
+                <div class="issue-details-title">
+                    <i class="fas ${issue.type === 'error' ? 'fa-times-circle' : 'fa-exclamation-triangle'} issue-icon ${issue.type}"></i>
+                    <h3>${issue.message}</h3>
+                </div>
+                <button onclick="this.closest('.issue-details-modal').remove()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="issue-details-body">
+                <div class="issue-summary">
+                    <div class="issue-stat">
+                        <span class="stat-number">${issue.count}</span>
+                        <span class="stat-text">Pagina${issue.count > 1 ? '\'s' : ''} met dit probleem</span>
+                    </div>
+                    <div class="issue-severity ${issue.type}">
+                        <i class="fas ${issue.type === 'error' ? 'fa-exclamation-circle' : 'fa-exclamation-triangle'}"></i>
+                        ${issue.type === 'error' ? 'Kritiek' : 'Waarschuwing'}
+                    </div>
+                </div>
+                
+                <div class="issue-description">
+                    <h4><i class="fas fa-info-circle"></i> Wat betekent dit?</h4>
+                    <p>${getIssueDescription(issue.message)}</p>
+                </div>
+                
+                <div class="affected-pages">
+                    <h4><i class="fas fa-list"></i> Getroffen pagina's (${issue.pages.length})</h4>
+                    <div class="pages-list">
+                        ${issue.pages.map(url => `
+                            <div class="affected-page-item">
+                                <div class="page-url">
+                                    <i class="fas fa-link"></i>
+                                    <a href="${url}" target="_blank">${getShortUrl(url)}</a>
+                                </div>
+                                <div class="page-actions">
+                                    <button onclick="analyzeSinglePage('${url}')" class="analyze-page-btn">
+                                        <i class="fas fa-search"></i> Analyseer
+                                    </button>
+                                    <button onclick="copyToClipboard('${url}')" class="copy-url-btn">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="issue-recommendations">
+                    <h4><i class="fas fa-lightbulb"></i> Hoe op te lossen?</h4>
+                    <div class="recommendations-list">
+                        ${getIssueRecommendations(issue.message).map(rec => `
+                            <div class="recommendation-item">
+                                <i class="fas fa-check"></i>
+                                <span>${rec}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+function getIssueDescription(issueMessage) {
+    const descriptions = {
+        'Title tag ontbreekt': 'De title tag is een van de belangrijkste SEO elementen. Het verschijnt in zoekresultaten en browser tabs. Zonder title tag kunnen zoekmachines je pagina niet goed indexeren.',
+        'Title lengte niet optimaal': 'Title tags moeten tussen 30-60 karakters lang zijn. Te kort en je mist kansen voor keywords, te lang en ze worden afgeknipt in zoekresultaten.',
+        'H1 tag ontbreekt': 'Elke pagina moet precies één H1 tag hebben die de hoofdinhoud beschrijft. Dit helpt zoekmachines begrijpen waar je pagina over gaat.',
+        'Meerdere H1 tags': 'Een pagina mag maar één H1 tag hebben. Meerdere H1 tags verwarren zoekmachines over de hoofdinhoud van je pagina.',
+        'Meta description ontbreekt': 'Meta descriptions verschijnen onder je titel in zoekresultaten. Ze beïnvloeden de click-through rate en geven gebruikers een preview van je content.',
+    };
+    
+    // Check for partial matches
+    for (const [key, desc] of Object.entries(descriptions)) {
+        if (issueMessage.includes(key)) {
+            return desc;
+        }
+    }
+    
+    return 'Dit is een SEO issue dat aandacht vereist. Bekijk de aanbevelingen hieronder voor specifieke oplossingen.';
+}
+
+function getIssueRecommendations(issueMessage) {
+    const recommendations = {
+        'Title tag ontbreekt': [
+            'Voeg een <title> tag toe in de <head> sectie van elke pagina',
+            'Gebruik unieke, beschrijvende titles voor elke pagina',
+            'Plaats belangrijke keywords aan het begin van de title'
+        ],
+        'Title lengte niet optimaal': [
+            'Houd titles tussen 30-60 karakters lang',
+            'Gebruik de belangrijkste keywords vooraan',
+            'Maak elke title uniek en beschrijvend'
+        ],
+        'H1 tag ontbreekt': [
+            'Voeg één H1 tag toe per pagina',
+            'Gebruik de H1 om de hoofdinhoud te beschrijven',
+            'Plaats relevante keywords in de H1'
+        ],
+        'Meerdere H1 tags': [
+            'Gebruik slechts één H1 per pagina',
+            'Verander extra H1 tags naar H2, H3, etc.',
+            'Zorg dat de H1 de belangrijkste heading is'
+        ],
+        'Meta description ontbreekt': [
+            'Voeg een meta description toe van 150-160 karakters',
+            'Maak het aantrekkelijk en actionable',
+            'Gebruik relevante keywords natuurlijk'
+        ],
+    };
+    
+    // Check for partial matches
+    for (const [key, recs] of Object.entries(recommendations)) {
+        if (issueMessage.includes(key)) {
+            return recs;
+        }
+    }
+    
+    return ['Bekijk SEO best practices voor dit specifieke probleem', 'Test wijzigingen met SEO tools', 'Monitor resultaten na implementatie'];
+}
+
+function analyzeSinglePage(url) {
+    // Set URL and analyze
+    document.getElementById('urlInput').value = url;
+    analyzeWebsite();
+    
+    // Close modal
+    document.querySelector('.issue-details-modal')?.remove();
+    
+    // Scroll to results
+    setTimeout(() => {
+        document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth' });
+    }, 500);
 }

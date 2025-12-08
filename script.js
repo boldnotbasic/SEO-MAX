@@ -130,10 +130,23 @@ class SEOChecker {
         };
     }
 
+    cleanHeadingText(text) {
+        if (!text) return text;
+
+        let cleaned = text.trim();
+
+        // Verwijder slider-navigatie woorden aan de randen, maar laat normale zinnen met "links" of "rechtsaf" staan
+        cleaned = cleaned.replace(/^Links\b\s*/i, '');
+        cleaned = cleaned.replace(/\s*\bRechtsaf\b$/i, '');
+
+        cleaned = cleaned.trim();
+        return cleaned || text.trim();
+    }
+
     analyzeH1(doc, keyword) {
         const h1Elements = doc.querySelectorAll('h1');
         const h1Count = h1Elements.length;
-        const h1Texts = Array.from(h1Elements).map(h1 => h1.textContent.trim());
+        const h1Texts = Array.from(h1Elements).map(h1 => this.cleanHeadingText(h1.textContent.trim()));
         
         let keywordInH1 = false;
         if (keyword) {

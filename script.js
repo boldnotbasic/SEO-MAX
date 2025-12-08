@@ -2321,6 +2321,9 @@ function displaySitewideResults(results) {
     const resultsEl = document.getElementById('sitewideResults');
     if (resultsEl) resultsEl.style.display = 'block';
     
+    // Store results globally for issue details
+    currentSitewideResults = results;
+    
     // Update overview stats
     updateSitewideOverview(results);
     
@@ -2354,7 +2357,7 @@ function displaySitewideIssues(issues) {
     }
     
     container.innerHTML = issues.map((issue, index) => `
-        <div class="sitewide-issue-item ${issue.type} clickable" onclick="showIssueDetails(${index})">
+        <div class="sitewide-issue-item ${issue.type} clickable" onclick="showIssueDetails(${index})" style="cursor: pointer;">
             <div class="issue-info">
                 <div class="issue-message">
                     <i class="fas ${issue.type === 'error' ? 'fa-times-circle' : 'fa-exclamation-triangle'}"></i>
@@ -2367,6 +2370,15 @@ function displaySitewideIssues(issues) {
             </div>
         </div>
     `).join('');
+    
+    // Add click event listeners as backup
+    container.querySelectorAll('.sitewide-issue-item.clickable').forEach((item, index) => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Click event triggered for issue:', index);
+            showIssueDetails(index);
+        });
+    });
 }
 
 function displaySitewideRecommendations(recommendations) {
@@ -2391,8 +2403,16 @@ function showSitewideError(message) {
 }
 
 function showIssueDetails(issueIndex) {
-    if (!currentSitewideResults || !currentSitewideResults.issues[issueIndex]) {
-        showErrorMessage('Issue niet gevonden', 'Kan issue details niet laden');
+    console.log('showIssueDetails called with index:', issueIndex);
+    console.log('currentSitewideResults:', currentSitewideResults);
+    
+    if (!currentSitewideResults) {
+        showErrorMessage('Geen resultaten', 'Voer eerst een sitewide analyse uit');
+        return;
+    }
+    
+    if (!currentSitewideResults.issues || !currentSitewideResults.issues[issueIndex]) {
+        showErrorMessage('Issue niet gevonden', `Issue ${issueIndex} bestaat niet. Totaal issues: ${currentSitewideResults.issues?.length || 0}`);
         return;
     }
     

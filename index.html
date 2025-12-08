@@ -162,13 +162,16 @@
         <i class="fas fa-sign-out-alt"></i> Uitloggen
     </button>
 
-    <script src="auth.js"></script>
     <script src="script.js"></script>
+    <script src="auth.js"></script>
     <script>
         // Show logout button if authenticated
-        if (localStorage.getItem('seomax_auth') === 'true') {
-            document.getElementById('logoutBtn').style.display = 'block';
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('seomax_auth') === 'true') {
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) logoutBtn.style.display = 'block';
+            }
+        });
     </script>
 </body>
 </html>

@@ -2,13 +2,16 @@
 class SimpleAuth {
     constructor() {
         this.isAuthenticated = localStorage.getItem('seomax_auth') === 'true';
-        this.checkAuth();
+        // Delay auth check to allow DOM to load
+        setTimeout(() => this.checkAuth(), 100);
     }
 
     checkAuth() {
-        if (!this.isAuthenticated && !this.isLoginPage()) {
-            this.showLoginModal();
-        }
+        // Temporarily disable auth for debugging
+        // if (!this.isAuthenticated && !this.isLoginPage()) {
+        //     this.showLoginModal();
+        // }
+        console.log('Auth check disabled for debugging');
     }
 
     isLoginPage() {

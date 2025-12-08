@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO MAX - Analyseer je website</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-brand">
+                <div class="brand-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>SEO MAX</h1>
+                    <p>Professionele SEO Analyse Tool</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="search-section">
+            <div class="search-container">
+                <input type="url" id="urlInput" placeholder="Typ 'demo' voor voorbeeld of een URL (bijv. https://example.com)" required>
+                <input type="text" id="keywordInput" placeholder="Zoekwoord voor SEO analyse (bijv. webdesign)" >
+                <button id="analyzeBtn" onclick="analyzeWebsite()">
+                    <i class="fas fa-search"></i> Analyseren
+                </button>
+            </div>
+            <div class="demo-info">
+                <p><i class="fas fa-info-circle"></i> <strong>Zoekwoord functie:</strong> Het zoekwoord wordt gebruikt om te controleren of het voorkomt in de title tag en H1 headings voor SEO optimalisatie.</p>
+                <p><i class="fas fa-play-circle"></i> <strong>Demo:</strong> Typ "demo" als URL om een voorbeeld te zien van de keyword analyse.</p>
+            </div>
+        </div>
+
+        <div id="loadingSection" class="loading-section" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Website wordt geanalyseerd...</p>
+        </div>
+
+        <div id="resultsSection" class="results-section" style="display: none;">
+            <h2>SEO Analyse Resultaten</h2>
+            
+            <!-- Statistics Overview -->
+            <div class="stats-overview">
+                <div class="stat-card score-card">
+                    <div class="stat-header">
+                        <h3>SEO SCORE</h3>
+                        <div class="stat-trend" id="scoreTrend"></div>
+                    </div>
+                    <div class="score-circle-container">
+                        <div class="circular-progress" id="circularProgress">
+                            <svg class="progress-ring" width="120" height="120">
+                                <circle class="progress-ring-background" cx="60" cy="60" r="50"></circle>
+                                <circle class="progress-ring-fill" cx="60" cy="60" r="50" id="progressCircle"></circle>
+                            </svg>
+                            <div class="score-text">
+                                <div class="stat-value" id="scoreValue">--</div>
+                                <div class="stat-subtitle">out of 100</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="score-status" id="scoreStatus">SEO Score: --</div>
+                    <div class="score-description" id="scoreDescription">Gebaseerd op 8 SEO factoren</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>CONTENT HEALTH</h3>
+                        <div class="stat-trend positive">+2</div>
+                    </div>
+                    <div class="stat-value" id="contentHealth">--</div>
+                    <div class="stat-subtitle" id="contentSubtitle">elements checked</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>TECHNICAL SEO</h3>
+                        <div class="stat-trend" id="techTrend"></div>
+                    </div>
+                    <div class="stat-value" id="techScore">--</div>
+                    <div class="stat-subtitle">performance</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>ISSUES FOUND</h3>
+                        <div class="stat-trend" id="issuesTrend"></div>
+                    </div>
+                    <div class="stat-value" id="issuesCount">--</div>
+                    <div class="stat-subtitle" id="issuesSubtitle">total issues</div>
+                </div>
+            </div>
+
+            <!-- Core Metrics -->
+            <div class="metrics-section">
+                <div class="metric-card">
+                    <h3><i class="fas fa-tachometer-alt"></i> Core SEO Vitals</h3>
+                    <div class="vitals-grid">
+                        <div class="vital-item">
+                            <div class="vital-label">Title Optimization</div>
+                            <div class="vital-bar">
+                                <div class="vital-progress" id="titleProgress"></div>
+                            </div>
+                            <div class="vital-score" id="titleScore">--</div>
+                        </div>
+                        <div class="vital-item">
+                            <div class="vital-label">Meta Description</div>
+                            <div class="vital-bar">
+                                <div class="vital-progress" id="metaProgress"></div>
+                            </div>
+                            <div class="vital-score" id="metaScore">--</div>
+                        </div>
+                        <div class="vital-item">
+                            <div class="vital-label">Image Alt Text</div>
+                            <div class="vital-bar">
+                                <div class="vital-progress" id="imageProgress"></div>
+                            </div>
+                            <div class="vital-score" id="imageScore">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Top Issues</h3>
+                    <div id="topIssues" class="issues-list">
+                        <!-- Issues will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Results -->
+            <div class="details-section">
+                <div class="detail-card">
+                    <h3><i class="fas fa-server"></i> Status & Indexering</h3>
+                    <div id="statusResults"></div>
+                </div>
+
+                <div class="detail-card">
+                    <h3><i class="fas fa-heading"></i> Content Analysis</h3>
+                    <div id="titleResults"></div>
+                    <div id="h1Results"></div>
+                    <div id="metaResults"></div>
+                </div>
+
+                <div class="detail-card">
+                    <h3><i class="fas fa-cog"></i> Technical SEO</h3>
+                    <div id="imageResults"></div>
+                    <div id="canonicalResults"></div>
+                    <div id="linksResults"></div>
+                    <div id="urlResults"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

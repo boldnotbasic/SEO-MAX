@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "SEO MAX Helper",
+  "version": "1.0",
+  "description": "Helper extension voor SEO MAX tool om CORS beperkingen te omzeilen",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SEO MAX Helper"
+  }
+}

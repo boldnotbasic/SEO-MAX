@@ -2356,8 +2356,15 @@ function displaySitewideIssues(issues) {
         return;
     }
     
-    container.innerHTML = issues.map((issue, index) => `
-        <div class="sitewide-issue-item ${issue.type} clickable" onclick="showIssueDetails(${index})" style="cursor: pointer;">
+    // Clear container first
+    container.innerHTML = '';
+    
+    // Create each issue item with proper event handling
+    issues.forEach((issue, index) => {
+        const issueElement = document.createElement('div');
+        issueElement.className = `sitewide-issue-item ${issue.type} clickable`;
+        issueElement.style.cursor = 'pointer';
+        issueElement.innerHTML = `
             <div class="issue-info">
                 <div class="issue-message">
                     <i class="fas ${issue.type === 'error' ? 'fa-times-circle' : 'fa-exclamation-triangle'}"></i>
@@ -2368,16 +2375,18 @@ function displaySitewideIssues(issues) {
             <div class="issue-arrow">
                 <i class="fas fa-chevron-right"></i>
             </div>
-        </div>
-    `).join('');
-    
-    // Add click event listeners as backup
-    container.querySelectorAll('.sitewide-issue-item.clickable').forEach((item, index) => {
-        item.addEventListener('click', function(e) {
+        `;
+        
+        // Add click event listener
+        issueElement.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Click event triggered for issue:', index);
+            e.stopPropagation();
+            console.log('Issue clicked:', index, issue.message);
             showIssueDetails(index);
         });
+        
+        // Add to container
+        container.appendChild(issueElement);
     });
 }
 
@@ -2401,6 +2410,18 @@ function displaySitewideRecommendations(recommendations) {
 function showSitewideError(message) {
     showErrorMessage('Sitewide Analyse Fout', message);
 }
+
+// Test function to check if JavaScript is working
+function testIssueClick() {
+    alert('JavaScript werkt! Issue click test succesvol.');
+    console.log('Test function called successfully');
+}
+
+// Global function to test issue details
+window.testShowIssueDetails = function(index = 0) {
+    console.log('Testing showIssueDetails with index:', index);
+    showIssueDetails(index);
+};
 
 function showIssueDetails(issueIndex) {
     console.log('showIssueDetails called with index:', issueIndex);

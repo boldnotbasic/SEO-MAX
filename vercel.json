@@ -1,17 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
+  "functions": {
+    "api/proxy.js": {
+      "runtime": "nodejs18.x"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
+  },
   "headers": [
     {
       "source": "/(.*)",

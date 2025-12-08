@@ -1070,7 +1070,26 @@ class WebsiteCrawler {
                     redirectTo: null
                 };
 
-                this.urlData.push(urlInfo);
+                // Check for duplicates - only add if URL doesn't exist yet
+                const existingUrl = this.urlData.find(existing => 
+                    existing.url === absoluteUrl && existing.type === 'link'
+                );
+                
+                if (!existingUrl) {
+                    this.urlData.push(urlInfo);
+                } else {
+                    // Update existing entry with additional info if needed
+                    if (urlInfo.text && !existingUrl.text) {
+                        existingUrl.text = urlInfo.text;
+                    }
+                    // Add found on page to existing entry
+                    if (!existingUrl.foundOnPages) {
+                        existingUrl.foundOnPages = [existingUrl.foundOn];
+                    }
+                    if (!existingUrl.foundOnPages.includes(url)) {
+                        existingUrl.foundOnPages.push(url);
+                    }
+                }
                 
                 // Add to crawl queue if internal and within depth
                 if (isInternal && depth > 1) {
@@ -1087,14 +1106,35 @@ class WebsiteCrawler {
                     const absoluteUrl = this.resolveUrl(src, url);
                     if (!absoluteUrl) continue;
                     
-                    this.urlData.push({
+                    const imageInfo = {
                         url: absoluteUrl,
                         type: 'image',
                         internal: this.isInternalUrl(absoluteUrl, baseUrl),
                         foundOn: url,
                         alt: img.getAttribute('alt') || '',
                         status: null
-                    });
+                    };
+
+                    // Check for duplicate images
+                    const existingImage = this.urlData.find(existing => 
+                        existing.url === absoluteUrl && existing.type === 'image'
+                    );
+                    
+                    if (!existingImage) {
+                        this.urlData.push(imageInfo);
+                    } else {
+                        // Update alt text if current one is empty
+                        if (imageInfo.alt && !existingImage.alt) {
+                            existingImage.alt = imageInfo.alt;
+                        }
+                        // Track found on pages
+                        if (!existingImage.foundOnPages) {
+                            existingImage.foundOnPages = [existingImage.foundOn];
+                        }
+                        if (!existingImage.foundOnPages.includes(url)) {
+                            existingImage.foundOnPages.push(url);
+                        }
+                    }
                 }
             }
 
@@ -1231,14 +1271,32 @@ class WebsiteCrawler {
                     <div class="url-meta">
                         ${url.type === 'image' ? `Alt: ${url.alt || 'Geen alt text'}` : ''}
                         ${url.text ? `Text: ${url.text.substring(0, 50)}${url.text.length > 50 ? '...' : ''}` : ''}
-                        ${url.foundOn ? `Gevonden op: ${this.getShortUrl(url.foundOn)}` : ''}
+                        ${this.getFoundOnInfo(url)}
                     </div>
                 </div>
                 <div class="url-status">
                     ${this.getStatusBadge(url)}
+                    ${this.getFrequencyBadge(url)}
                 </div>
             </div>
         `).join('');
+    }
+
+    getFoundOnInfo(url) {
+        if (url.foundOnPages && url.foundOnPages.length > 1) {
+            return `Gevonden op ${url.foundOnPages.length} pagina's`;
+        } else if (url.foundOn) {
+            return `Gevonden op: ${this.getShortUrl(url.foundOn)}`;
+        }
+        return '';
+    }
+
+    getFrequencyBadge(url) {
+        const count = url.foundOnPages ? url.foundOnPages.length : 1;
+        if (count > 1) {
+            return `<span class="status-badge frequency">${count}x</span>`;
+        }
+        return '';
     }
 
     getStatusBadge(url) {

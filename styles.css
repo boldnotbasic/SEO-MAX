@@ -702,7 +702,7 @@ body {
 
 .crawler-input-group {
     display: grid;
-    grid-template-columns: 200px 100px 140px;
+    grid-template-columns: 1fr auto;
     gap: 12px;
     margin-bottom: 12px;
 }
@@ -1378,4 +1378,211 @@ body {
 .save-notification-content i {
     color: #86efac;
     font-size: 1rem;
+}
+
+/* Clickable Result Items */
+.result-item.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.result-item.clickable:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Alt-text Modal */
+.alt-text-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+}
+
+.alt-text-modal-content {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+    border-radius: 16px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.alt-text-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alt-text-header h3 {
+    color: white;
+    font-size: 1.2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alt-text-header h3 i {
+    color: #fbbf24;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.alt-text-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.alt-text-body p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.missing-images-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.missing-image-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.missing-image-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.image-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.image-info i {
+    color: #60a5fa;
+    font-size: 1.1rem;
+}
+
+.image-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.image-filename {
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+.image-path {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8rem;
+    margin-top: 2px;
+    word-break: break-all;
+}
+
+.copy-btn {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    border-radius: 6px;
+    color: #93c5fd;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.copy-btn:hover {
+    background: rgba(59, 130, 246, 0.3);
+    border-color: rgba(59, 130, 246, 0.6);
+    transform: translateY(-1px);
+}
+
+.alt-text-footer {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alt-text-footer p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.alt-text-footer i {
+    color: #fbbf24;
+    margin-top: 2px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .alt-text-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .alt-text-header {
+        padding: 16px 20px;
+    }
+    
+    .alt-text-body {
+        padding: 20px;
+    }
+    
+    .missing-image-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .copy-btn {
+        align-self: flex-end;
+    }
 }

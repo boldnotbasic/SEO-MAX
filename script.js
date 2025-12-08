@@ -162,13 +162,25 @@ class SEOChecker {
         const images = doc.querySelectorAll('img');
         const totalImages = images.length;
         const imagesWithAlt = Array.from(images).filter(img => img.getAttribute('alt'));
-        const imagesWithoutAlt = totalImages - imagesWithAlt.length;
+        const imagesWithoutAlt = Array.from(images).filter(img => !img.getAttribute('alt'));
+        
+        // Extract filenames from images without alt text
+        const missingAltImages = imagesWithoutAlt.map(img => {
+            const src = img.getAttribute('src') || '';
+            const filename = src.split('/').pop() || src;
+            return {
+                filename: filename,
+                src: src,
+                fullUrl: img.src || src
+            };
+        });
         
         return {
             total: totalImages,
             withAlt: imagesWithAlt.length,
-            withoutAlt: imagesWithoutAlt,
-            percentage: totalImages > 0 ? Math.round((imagesWithAlt.length / totalImages) * 100) : 100
+            withoutAlt: imagesWithoutAlt.length,
+            percentage: totalImages > 0 ? Math.round((imagesWithAlt.length / totalImages) * 100) : 100,
+            missingAltImages: missingAltImages
         };
     }
 
@@ -830,12 +842,12 @@ function displayImageResults(images) {
             <div class="value">${images.percentage}% (${images.withAlt}/${images.total} afbeeldingen)</div>
         </div>
         ${images.withoutAlt > 0 ? `
-        <div class="result-item warning">
+        <div class="result-item warning clickable" onclick="showMissingAltImages(${JSON.stringify(images.missingAltImages).replace(/"/g, '&quot;')})">
             <div class="label">
                 <i class="fas fa-exclamation-triangle"></i>
                 Ontbrekende Alt-text
             </div>
-            <div class="value">${images.withoutAlt} afbeeldingen zonder alt-text</div>
+            <div class="value">${images.withoutAlt} afbeeldingen zonder alt-text <i class="fas fa-eye" style="margin-left: 8px; opacity: 0.7;"></i></div>
         </div>
         ` : ''}
     `;
@@ -1398,7 +1410,7 @@ function startCrawling() {
         return;
     }
     
-    const depth = parseInt(document.getElementById('crawlerDepth')?.value) || 1;
+    const depth = 1; // Fixed depth for URL discovery
     const includeExternal = document.getElementById('includeExternal')?.checked;
     const checkRedirects = document.getElementById('checkRedirects')?.checked;
     const findImages = document.getElementById('findImages')?.checked;
@@ -1635,4 +1647,66 @@ function saveAnalysis() {
 
 function clearAllSaved() {
     analysisStorage.clearAllSaved();
+}
+
+// Missing Alt-text Popup
+function showMissingAltImages(missingImages) {
+    const modal = document.createElement('div');
+    modal.className = 'alt-text-modal';
+    modal.innerHTML = `
+        <div class="alt-text-modal-content">
+            <div class="alt-text-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Afbeeldingen zonder Alt-text</h3>
+                <button onclick="this.closest('.alt-text-modal').remove()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="alt-text-body">
+                <p>De volgende afbeeldingen hebben geen alt-text:</p>
+                <div class="missing-images-list">
+                    ${missingImages.map((img, index) => `
+                        <div class="missing-image-item">
+                            <div class="image-info">
+                                <i class="fas fa-image"></i>
+                                <div class="image-details">
+                                    <div class="image-filename">${img.filename}</div>
+                                    <div class="image-path">${img.src}</div>
+                                </div>
+                            </div>
+                            <button onclick="copyToClipboard('${img.filename}')" class="copy-btn" title="Kopieer bestandsnaam">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="alt-text-footer">
+                    <p><i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Voeg beschrijvende alt-text toe aan deze afbeeldingen voor betere SEO en toegankelijkheid.</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        analysisStorage.showSaveNotification(`"${text}" gekopieerd!`);
+    }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        analysisStorage.showSaveNotification(`"${text}" gekopieerd!`);
+    });
 }

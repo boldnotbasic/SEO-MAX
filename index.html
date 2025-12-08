@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SEO MAX - Analyseer je website</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -156,6 +157,18 @@
         </div>
     </div>
 
+    <!-- Logout button (only shown when authenticated) -->
+    <button class="logout-btn" onclick="auth.logout()" style="display: none;" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i> Uitloggen
+    </button>
+
+    <script src="auth.js"></script>
     <script src="script.js"></script>
+    <script>
+        // Show logout button if authenticated
+        if (localStorage.getItem('seomax_auth') === 'true') {
+            document.getElementById('logoutBtn').style.display = 'block';
+        }
+    </script>
 </body>
 </html>

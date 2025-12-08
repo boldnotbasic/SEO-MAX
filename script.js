@@ -2321,8 +2321,66 @@ function displaySitewideResults(results) {
     const resultsEl = document.getElementById('sitewideResults');
     if (resultsEl) resultsEl.style.display = 'block';
     
+    // Update overview stats
+    updateSitewideOverview(results);
+    
+    // Display issues and recommendations
+    displaySitewideIssues(results.issues);
+    displaySitewideRecommendations(results.recommendations);
+    
     console.log('Sitewide results ready:', results);
     analysisStorage.showSaveNotification('Sitewide analyse voltooid!');
+}
+
+function updateSitewideOverview(results) {
+    const avgScoreEl = document.getElementById('sitewideAvgScore');
+    const pageCountEl = document.getElementById('sitewidePageCount');
+    const issueCountEl = document.getElementById('sitewideIssueCount');
+    const recommendationCountEl = document.getElementById('sitewideRecommendationCount');
+    
+    if (avgScoreEl) avgScoreEl.textContent = results.averageScore + '%';
+    if (pageCountEl) pageCountEl.textContent = results.successfulPages + '/' + results.totalPages;
+    if (issueCountEl) issueCountEl.textContent = results.issues.length;
+    if (recommendationCountEl) recommendationCountEl.textContent = results.recommendations.length;
+}
+
+function displaySitewideIssues(issues) {
+    const container = document.getElementById('sitewideTopIssues');
+    if (!container) return;
+    
+    if (issues.length === 0) {
+        container.innerHTML = '<div class="no-issues"><i class="fas fa-check-circle"></i> Geen grote issues gevonden!</div>';
+        return;
+    }
+    
+    container.innerHTML = issues.map(issue => `
+        <div class="sitewide-issue-item ${issue.type}">
+            <div class="issue-info">
+                <div class="issue-message">
+                    <i class="fas ${issue.type === 'error' ? 'fa-times-circle' : 'fa-exclamation-triangle'}"></i>
+                    ${issue.message}
+                </div>
+                <div class="issue-count">${issue.count} pagina${issue.count > 1 ? '\'s' : ''}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function displaySitewideRecommendations(recommendations) {
+    const container = document.getElementById('sitewideRecommendations');
+    if (!container) return;
+    
+    if (recommendations.length === 0) {
+        container.innerHTML = '<div class="no-recommendations">Geen specifieke aanbevelingen op dit moment.</div>';
+        return;
+    }
+    
+    container.innerHTML = recommendations.map(recommendation => `
+        <div class="sitewide-recommendation-item">
+            <i class="fas fa-lightbulb"></i>
+            <span>${recommendation}</span>
+        </div>
+    `).join('');
 }
 
 function showSitewideError(message) {

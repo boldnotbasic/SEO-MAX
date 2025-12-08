@@ -1392,8 +1392,320 @@ class WebsiteCrawler {
     }
 }
 
+// Sitewide SEO Analyzer Class
+class SitewideAnalyzer {
+    constructor() {
+        this.seoChecker = new SEOChecker();
+        this.analyzedPages = [];
+        this.isRunning = false;
+        this.maxPages = 10; // Limit voor performance
+    }
+
+    async analyzeSitewide(baseUrl, keyword = '', options = {}) {
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
+        this.analyzedPages = [];
+        
+        const {
+            maxPages = this.maxPages,
+            includeSubdomains = false
+        } = options;
+
+        try {
+            this.showSitewideProgress();
+            this.updateSitewideProgress(0, 'Pagina\'s ontdekken...');
+            
+            // Stap 1: Vind alle interne pagina's
+            const internalUrls = await this.discoverInternalPages(baseUrl, maxPages, includeSubdomains);
+            
+            // Stap 2: Analyseer elke pagina
+            let completed = 0;
+            for (const url of internalUrls) {
+                try {
+                    this.updateSitewideProgress(
+                        (completed / internalUrls.length) * 100,
+                        `Analyseren: ${this.getShortUrl(url)}`
+                    );
+                    
+                    const pageAnalysis = await this.analyzePageSEO(url, keyword);
+                    this.analyzedPages.push(pageAnalysis);
+                    
+                } catch (error) {
+                    console.error(`Failed to analyze ${url}:`, error);
+                    // Voeg foutpagina toe aan resultaten
+                    this.analyzedPages.push({
+                        url: url,
+                        error: error.message,
+                        score: 0,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                completed++;
+            }
+            
+            this.updateSitewideProgress(100, 'Sitewide analyse voltooid!');
+            
+            // Stap 3: Bereken sitewide statistieken
+            const sitewideResults = this.calculateSitewideStats();
+            
+            // Stap 4: Toon resultaten
+            this.displaySitewideResults(sitewideResults);
+            
+            return sitewideResults;
+            
+        } catch (error) {
+            console.error('Sitewide analysis error:', error);
+            this.showSitewideError(`Sitewide analyse fout: ${error.message}`);
+        } finally {
+            this.isRunning = false;
+            setTimeout(() => this.hideSitewideProgress(), 1000);
+        }
+    }
+
+    async discoverInternalPages(baseUrl, maxPages, includeSubdomains) {
+        const foundUrls = new Set([baseUrl]);
+        const crawledUrls = new Set();
+        const urlsToCheck = [baseUrl];
+        
+        while (urlsToCheck.length > 0 && foundUrls.size < maxPages) {
+            const currentUrl = urlsToCheck.shift();
+            if (crawledUrls.has(currentUrl)) continue;
+            
+            crawledUrls.add(currentUrl);
+            
+            try {
+                const response = await this.seoChecker.fetchWithCORS(currentUrl);
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                
+                // Vind alle interne links
+                const links = doc.querySelectorAll('a[href]');
+                for (const link of links) {
+                    const href = link.getAttribute('href');
+                    if (!href) continue;
+                    
+                    const absoluteUrl = this.resolveUrl(href, currentUrl);
+                    if (!absoluteUrl) continue;
+                    
+                    if (this.isInternalUrl(absoluteUrl, baseUrl, includeSubdomains)) {
+                        // Filter uit: anchors, parameters, duplicaten
+                        const cleanUrl = this.cleanUrl(absoluteUrl);
+                        if (cleanUrl && !foundUrls.has(cleanUrl) && foundUrls.size < maxPages) {
+                            foundUrls.add(cleanUrl);
+                            urlsToCheck.push(cleanUrl);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(`Failed to crawl ${currentUrl} for links:`, error);
+            }
+        }
+        
+        return Array.from(foundUrls).slice(0, maxPages);
+    }
+
+    async analyzePageSEO(url, keyword) {
+        const results = await this.seoChecker.analyzeWebsite(url, keyword);
+        const score = this.seoChecker.calculateScore();
+        
+        return {
+            url: url,
+            keyword: keyword,
+            results: results,
+            score: score,
+            timestamp: new Date().toISOString(),
+            issues: this.extractPageIssues(results)
+        };
+    }
+
+    extractPageIssues(results) {
+        const issues = [];
+        
+        if (!results.title?.exists) {
+            issues.push({ type: 'error', message: 'Title tag ontbreekt' });
+        } else if (!results.title?.isOptimal) {
+            issues.push({ type: 'warning', message: 'Title lengte niet optimaal' });
+        }
+        
+        if (!results.h1?.isOptimal) {
+            issues.push({ 
+                type: results.h1?.count === 0 ? 'error' : 'warning', 
+                message: results.h1?.count === 0 ? 'H1 tag ontbreekt' : 'Meerdere H1 tags' 
+            });
+        }
+        
+        if (!results.meta?.exists) {
+            issues.push({ type: 'warning', message: 'Meta description ontbreekt' });
+        }
+        
+        if (results.images?.withoutAlt > 0) {
+            issues.push({ 
+                type: 'warning', 
+                message: `${results.images.withoutAlt} afbeeldingen zonder alt-text` 
+            });
+        }
+        
+        return issues;
+    }
+
+    calculateSitewideStats() {
+        const totalPages = this.analyzedPages.length;
+        const successfulPages = this.analyzedPages.filter(p => !p.error);
+        
+        if (successfulPages.length === 0) {
+            return {
+                totalPages: totalPages,
+                successfulPages: 0,
+                averageScore: 0,
+                pages: this.analyzedPages,
+                issues: [],
+                recommendations: []
+            };
+        }
+        
+        const averageScore = Math.round(
+            successfulPages.reduce((sum, page) => sum + page.score, 0) / successfulPages.length
+        );
+        
+        // Verzamel alle issues
+        const allIssues = [];
+        successfulPages.forEach(page => {
+            page.issues?.forEach(issue => {
+                const existingIssue = allIssues.find(i => i.message === issue.message);
+                if (existingIssue) {
+                    existingIssue.count++;
+                    existingIssue.pages.push(page.url);
+                } else {
+                    allIssues.push({
+                        type: issue.type,
+                        message: issue.message,
+                        count: 1,
+                        pages: [page.url]
+                    });
+                }
+            });
+        });
+        
+        // Sorteer issues op ernst en frequentie
+        allIssues.sort((a, b) => {
+            const typeWeight = { error: 3, warning: 2, notice: 1 };
+            const aWeight = (typeWeight[a.type] || 1) * a.count;
+            const bWeight = (typeWeight[b.type] || 1) * b.count;
+            return bWeight - aWeight;
+        });
+        
+        return {
+            totalPages: totalPages,
+            successfulPages: successfulPages.length,
+            averageScore: averageScore,
+            pages: this.analyzedPages,
+            issues: allIssues.slice(0, 10), // Top 10 issues
+            recommendations: this.generateRecommendations(allIssues, averageScore)
+        };
+    }
+
+    generateRecommendations(issues, averageScore) {
+        const recommendations = [];
+        
+        if (averageScore < 50) {
+            recommendations.push('🚨 Prioriteit: Focus op basis SEO elementen (title, H1, meta description)');
+        } else if (averageScore < 70) {
+            recommendations.push('⚠️ Verbetering: Werk aan technische SEO aspecten');
+        } else {
+            recommendations.push('✅ Goed: Focus op content optimalisatie en gebruikerservaring');
+        }
+        
+        // Issue-specifieke aanbevelingen
+        issues.slice(0, 3).forEach(issue => {
+            if (issue.message.includes('Title')) {
+                recommendations.push(`📝 Voeg unieke, beschrijvende titles toe aan ${issue.count} pagina's`);
+            } else if (issue.message.includes('H1')) {
+                recommendations.push(`🏷️ Zorg voor één duidelijke H1 per pagina op ${issue.count} pagina's`);
+            } else if (issue.message.includes('Meta description')) {
+                recommendations.push(`📄 Schrijf aantrekkelijke meta descriptions voor ${issue.count} pagina's`);
+            }
+        });
+        
+        return recommendations.slice(0, 5); // Max 5 aanbevelingen
+    }
+
+    // Helper methods
+    resolveUrl(href, baseUrl) {
+        try {
+            return new URL(href, baseUrl).href;
+        } catch {
+            return null;
+        }
+    }
+
+    isInternalUrl(url, baseUrl, includeSubdomains) {
+        try {
+            const urlObj = new URL(url);
+            const baseObj = new URL(baseUrl);
+            
+            if (includeSubdomains) {
+                return urlObj.hostname.endsWith(baseObj.hostname) || 
+                       baseObj.hostname.endsWith(urlObj.hostname);
+            } else {
+                return urlObj.hostname === baseObj.hostname;
+            }
+        } catch {
+            return false;
+        }
+    }
+
+    cleanUrl(url) {
+        try {
+            const urlObj = new URL(url);
+            // Verwijder anchors en sommige parameters
+            urlObj.hash = '';
+            // Behoud belangrijke parameters, verwijder tracking
+            const paramsToRemove = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid'];
+            paramsToRemove.forEach(param => urlObj.searchParams.delete(param));
+            return urlObj.href;
+        } catch {
+            return url;
+        }
+    }
+
+    getShortUrl(url) {
+        try {
+            const urlObj = new URL(url);
+            return urlObj.pathname + urlObj.search;
+        } catch {
+            return url;
+        }
+    }
+
+    // UI Methods (worden later geïmplementeerd)
+    showSitewideProgress() {
+        // TODO: Implementeer sitewide progress UI
+        console.log('Sitewide analysis started');
+    }
+
+    updateSitewideProgress(percent, status) {
+        console.log(`Progress: ${percent}% - ${status}`);
+    }
+
+    hideSitewideProgress() {
+        console.log('Sitewide analysis completed');
+    }
+
+    displaySitewideResults(results) {
+        console.log('Sitewide results:', results);
+        // TODO: Implementeer results display UI
+    }
+
+    showSitewideError(message) {
+        console.error('Sitewide error:', message);
+        // TODO: Implementeer error display
+    }
+}
+
 // Initialize crawler
 const websiteCrawler = new WebsiteCrawler();
+const sitewideAnalyzer = new SitewideAnalyzer();
 
 // Crawler functions
 let selectedCrawlerUrl = '';
@@ -1910,4 +2222,109 @@ function showH1Popup(h1List) {
             modal.remove();
         }
     });
+}
+
+// Sitewide Analysis Functions
+let selectedSitewideUrl = '';
+let currentSitewideResults = null;
+
+function useSitewideUrl() {
+    const mainUrl = document.getElementById('urlInput').value.trim();
+    
+    if (!mainUrl || mainUrl.toLowerCase() === 'demo') {
+        showErrorMessage('Geen geldige URL gevonden', 'Voer eerst een URL in het bovenste veld in');
+        return;
+    }
+    
+    // Ensure URL has protocol
+    let processedUrl = mainUrl;
+    if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+        processedUrl = 'https://' + processedUrl;
+    }
+    
+    selectedSitewideUrl = processedUrl;
+    
+    // Update display
+    const displayEl = document.getElementById('sitewideUrlDisplay');
+    if (displayEl) {
+        displayEl.textContent = processedUrl;
+        displayEl.classList.remove('empty');
+    }
+    
+    // Enable sitewide button
+    const sitewideBtn = document.getElementById('startSitewideBtn');
+    if (sitewideBtn) {
+        sitewideBtn.disabled = false;
+    }
+    
+    // Show success notification
+    analysisStorage.showSaveNotification('URL geselecteerd voor sitewide analyse!');
+}
+
+async function startSitewideAnalysis() {
+    if (!selectedSitewideUrl) {
+        showErrorMessage('Geen URL geselecteerd', 'Klik eerst op "Gebruik URL hierboven"');
+        return;
+    }
+    
+    const keyword = document.getElementById('keywordInput').value.trim();
+    const maxPages = parseInt(document.getElementById('maxPages').value);
+    const includeSubdomains = document.getElementById('includeSubdomains')?.checked;
+    
+    try {
+        // Update UI methods in SitewideAnalyzer
+        sitewideAnalyzer.showSitewideProgress = showSitewideProgress;
+        sitewideAnalyzer.updateSitewideProgress = updateSitewideProgress;
+        sitewideAnalyzer.hideSitewideProgress = hideSitewideProgress;
+        sitewideAnalyzer.displaySitewideResults = displaySitewideResults;
+        sitewideAnalyzer.showSitewideError = showSitewideError;
+        
+        const results = await sitewideAnalyzer.analyzeSitewide(selectedSitewideUrl, keyword, {
+            maxPages,
+            includeSubdomains
+        });
+        
+        currentSitewideResults = results;
+        
+    } catch (error) {
+        console.error('Sitewide analysis failed:', error);
+        showSitewideError(`Sitewide analyse fout: ${error.message}`);
+    }
+}
+
+function showSitewideProgress() {
+    const progressEl = document.getElementById('sitewideProgress');
+    const resultsEl = document.getElementById('sitewideResults');
+    if (progressEl) progressEl.style.display = 'block';
+    if (resultsEl) resultsEl.style.display = 'none';
+}
+
+function updateSitewideProgress(percent, status) {
+    const fill = document.getElementById('sitewideProgressFill');
+    const statusEl = document.getElementById('sitewideStatus');
+    const countEl = document.getElementById('sitewideCount');
+    
+    if (fill) fill.style.width = percent + '%';
+    if (statusEl) statusEl.textContent = status;
+    if (countEl) {
+        const analyzedCount = sitewideAnalyzer.analyzedPages.length;
+        countEl.textContent = `${analyzedCount} pagina's geanalyseerd`;
+    }
+}
+
+function hideSitewideProgress() {
+    const progressEl = document.getElementById('sitewideProgress');
+    if (progressEl) progressEl.style.display = 'none';
+}
+
+function displaySitewideResults(results) {
+    const resultsEl = document.getElementById('sitewideResults');
+    if (resultsEl) resultsEl.style.display = 'block';
+    
+    console.log('Sitewide results ready:', results);
+    analysisStorage.showSaveNotification('Sitewide analyse voltooid!');
+}
+
+function showSitewideError(message) {
+    showErrorMessage('Sitewide Analyse Fout', message);
 }

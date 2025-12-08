@@ -281,6 +281,138 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Sitewide SEO Analysis Section -->
+            <div class="sitewide-section">
+                <div class="sitewide-card">
+                    <h3><i class="fas fa-globe"></i> Sitewide SEO Analyse</h3>
+                    <p>Analyseer meerdere pagina's van je website voor complete SEO inzichten</p>
+                    
+                    <div class="sitewide-controls">
+                        <div class="sitewide-input-group">
+                            <button id="useSitewideUrlBtn" onclick="useSitewideUrl()" class="use-url-btn">
+                                <i class="fas fa-arrow-down"></i> Gebruik URL hierboven
+                            </button>
+                            <button id="startSitewideBtn" onclick="startSitewideAnalysis()" disabled>
+                                <i class="fas fa-chart-line"></i> Start Sitewide Analyse
+                            </button>
+                        </div>
+                        <div class="sitewide-url-display">
+                            <span class="url-label">Te analyseren website:</span>
+                            <span id="sitewideUrlDisplay" class="url-display">Geen URL geselecteerd</span>
+                        </div>
+                        <div class="sitewide-options">
+                            <label>
+                                <span>Max pagina's:</span>
+                                <select id="maxPages">
+                                    <option value="5">5 pagina's</option>
+                                    <option value="10" selected>10 pagina's</option>
+                                    <option value="15">15 pagina's</option>
+                                    <option value="20">20 pagina's</option>
+                                </select>
+                            </label>
+                            <label><input type="checkbox" id="includeSubdomains"> Inclusief subdomains</label>
+                        </div>
+                    </div>
+
+                    <div id="sitewideProgress" class="sitewide-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="sitewideProgressFill"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="sitewideStatus">Sitewide analyse gestart...</span>
+                            <span id="sitewideCount">0 pagina's geanalyseerd</span>
+                        </div>
+                    </div>
+
+                    <div id="sitewideResults" class="sitewide-results" style="display: none;">
+                        <!-- Sitewide Overview Dashboard -->
+                        <div class="sitewide-overview">
+                            <h4><i class="fas fa-dashboard"></i> Site Overzicht</h4>
+                            <div class="overview-stats">
+                                <div class="overview-stat">
+                                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="sitewideAvgScore">--</div>
+                                        <div class="stat-label">Gemiddelde SEO Score</div>
+                                    </div>
+                                </div>
+                                <div class="overview-stat">
+                                    <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="sitewidePageCount">--</div>
+                                        <div class="stat-label">Geanalyseerde Pagina's</div>
+                                    </div>
+                                </div>
+                                <div class="overview-stat">
+                                    <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="sitewideIssueCount">--</div>
+                                        <div class="stat-label">Gevonden Issues</div>
+                                    </div>
+                                </div>
+                                <div class="overview-stat">
+                                    <div class="stat-icon"><i class="fas fa-lightbulb"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="sitewideRecommendationCount">--</div>
+                                        <div class="stat-label">Aanbevelingen</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Issues & Recommendations -->
+                        <div class="sitewide-insights">
+                            <div class="insights-column">
+                                <h4><i class="fas fa-exclamation-circle"></i> Top Issues</h4>
+                                <div id="sitewideTopIssues" class="sitewide-issues-list">
+                                    <!-- Issues will be populated here -->
+                                </div>
+                            </div>
+                            <div class="insights-column">
+                                <h4><i class="fas fa-lightbulb"></i> Aanbevelingen</h4>
+                                <div id="sitewideRecommendations" class="sitewide-recommendations-list">
+                                    <!-- Recommendations will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pages Table -->
+                        <div class="sitewide-pages">
+                            <div class="pages-header">
+                                <h4><i class="fas fa-table"></i> Pagina Details</h4>
+                                <div class="pages-actions">
+                                    <button onclick="exportSitewideResults('csv')" class="export-btn">
+                                        <i class="fas fa-download"></i> CSV Export
+                                    </button>
+                                    <button onclick="exportSitewideResults('json')" class="export-btn">
+                                        <i class="fas fa-file-code"></i> JSON Export
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="pages-table-container">
+                                <table class="pages-table" id="sitewideTable">
+                                    <thead>
+                                        <tr>
+                                            <th onclick="sortSitewideTable('url')">URL <i class="fas fa-sort"></i></th>
+                                            <th onclick="sortSitewideTable('score')">SEO Score <i class="fas fa-sort"></i></th>
+                                            <th onclick="sortSitewideTable('title')">Title <i class="fas fa-sort"></i></th>
+                                            <th onclick="sortSitewideTable('h1')">H1 <i class="fas fa-sort"></i></th>
+                                            <th onclick="sortSitewideTable('meta')">Meta Desc <i class="fas fa-sort"></i></th>
+                                            <th onclick="sortSitewideTable('issues')">Issues <i class="fas fa-sort"></i></th>
+                                            <th>Acties</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sitewideTableBody">
+                                        <!-- Table rows will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

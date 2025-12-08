@@ -2055,33 +2055,45 @@ body {
     font-size: 0.9rem;
 }
 
-/* Score Indicator */
-.score-indicator {
-    margin-top: 16px;
-    width: 100%;
+/* Enhanced Circular Progress */
+.circular-progress {
+    position: relative;
+    margin: 20px auto;
 }
 
-.indicator-bar {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 8px;
+.progress-ring {
+    transform: rotate(-90deg);
 }
 
-.indicator-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #22c55e 100%);
-    border-radius: 4px;
-    transition: width 0.8s ease;
-    width: 0%;
+.progress-ring-background {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 8;
 }
 
-.indicator-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.6);
+.progress-ring-fill {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 314;
+    stroke-dashoffset: 314;
+    transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease;
+}
+
+.progress-ring-fill.excellent {
+    stroke: #22c55e;
+}
+
+.progress-ring-fill.good {
+    stroke: #f59e0b;
+}
+
+.progress-ring-fill.average {
+    stroke: #f97316;
+}
+
+.progress-ring-fill.poor {
+    stroke: #ef4444;
 }
 
 /* Compact Combined Card */

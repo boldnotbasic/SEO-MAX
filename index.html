@@ -71,6 +71,20 @@
             
             <!-- Statistics Overview -->
             <div class="stats-overview">
+                <div class="stat-card preview-card">
+                    <div class="stat-header">
+                        <h3><i class="fas fa-desktop"></i> HOMEPAGE PREVIEW</h3>
+                        <div class="preview-url-small" id="previewUrl">--</div>
+                    </div>
+                    <div class="preview-content-compact">
+                        <iframe id="homepageFrame" src="about:blank" frameborder="0" loading="lazy"></iframe>
+                        <div class="preview-overlay" id="previewOverlay">
+                            <i class="fas fa-eye"></i>
+                            <p>Klik om te laden</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="stat-card score-card">
                     <div class="stat-header">
                         <h3>SEO SCORE</h3>
@@ -87,33 +101,9 @@
                                 <div class="stat-subtitle">out of 100</div>
                             </div>
                         </div>
-                        <div class="score-indicator" id="scoreIndicator">
-                            <div class="indicator-bar">
-                                <div class="indicator-fill" id="indicatorFill"></div>
-                            </div>
-                            <div class="indicator-labels">
-                                <span>Slecht</span>
-                                <span>Goed</span>
-                                <span>Excellent</span>
-                            </div>
-                        </div>
                     </div>
                     <div class="score-status" id="scoreStatus">SEO Score: --</div>
                     <div class="score-description" id="scoreDescription">Gebaseerd op 8 SEO factoren</div>
-                </div>
-                
-                <div class="stat-card preview-card">
-                    <div class="stat-header">
-                        <h3><i class="fas fa-desktop"></i> HOMEPAGE PREVIEW</h3>
-                        <div class="preview-url-small" id="previewUrl">--</div>
-                    </div>
-                    <div class="preview-content-compact">
-                        <iframe id="homepageFrame" src="about:blank" frameborder="0" loading="lazy"></iframe>
-                        <div class="preview-overlay" id="previewOverlay">
-                            <i class="fas fa-eye"></i>
-                            <p>Klik om te laden</p>
-                        </div>
-                    </div>
                 </div>
                 
                 <div class="stat-card combined-card">

@@ -669,7 +669,6 @@ function calculateIssues(results) {
 function updateCircularProgress(score) {
     const circle = document.getElementById('progressCircle');
     const scoreStatus = document.getElementById('scoreStatus');
-    const indicatorFill = document.getElementById('indicatorFill');
     if (!circle || !scoreStatus) return;
     
     const radius = 50;
@@ -704,13 +703,6 @@ function updateCircularProgress(score) {
     setTimeout(() => {
         circle.style.strokeDashoffset = strokeDashoffset;
     }, 500);
-    
-    // Update indicator bar
-    if (indicatorFill) {
-        setTimeout(() => {
-            indicatorFill.style.width = `${score}%`;
-        }, 300);
-    }
 }
 
 function displayStatusResults(status) {

@@ -3345,7 +3345,7 @@ body {
 .ai-config-prompt i {
     font-size: 3rem;
     margin-bottom: 16px;
-    color: #f59e0b;
+    color: #60a5fa;
 }
 
 .ai-config-prompt h4 {
@@ -3483,6 +3483,119 @@ body {
 
 .retry-btn:hover {
     background: rgba(239, 68, 68, 0.3);
+}
+
+/* AI Provider Selection Styling */
+.ai-provider-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 600px;
+}
+
+.provider-option {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.provider-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.provider-option.free:hover {
+    border-color: rgba(34, 197, 94, 0.5);
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.2);
+}
+
+.provider-option.premium:hover {
+    border-color: rgba(245, 158, 11, 0.5);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
+}
+
+.provider-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.provider-header i {
+    font-size: 1.5rem;
+    margin-right: 8px;
+}
+
+.provider-option.free .provider-header i {
+    color: #22c55e;
+}
+
+.provider-option.premium .provider-header i {
+    color: #f59e0b;
+}
+
+.provider-header h5 {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.provider-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.provider-badge.free {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.provider-badge.premium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.provider-option p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+
+.provider-option ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.provider-option li {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+}
+
+/* Responsive AI Provider Options */
+@media (max-width: 768px) {
+    .ai-provider-options {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .provider-option {
+        padding: 16px;
+    }
 }
 
 /* Responsive Modal */

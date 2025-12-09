@@ -2327,9 +2327,9 @@ function displaySitewideResults(results) {
     // Update overview stats
     updateSitewideOverview(results);
     
-    // Display issues and recommendations
+    // Display issues and pages list
     displaySitewideIssues(results.issues);
-    displaySitewideRecommendations(results.recommendations);
+    displaySitewidePagesList(results.pages);
     
     console.log('Sitewide results ready:', results);
     analysisStorage.showSaveNotification('Sitewide analyse voltooid!');
@@ -2390,21 +2390,43 @@ function displaySitewideIssues(issues) {
     });
 }
 
-function displaySitewideRecommendations(recommendations) {
-    const container = document.getElementById('sitewideRecommendations');
+function displaySitewidePagesList(pages) {
+    const container = document.getElementById('sitewidePagesList');
     if (!container) return;
     
-    if (recommendations.length === 0) {
-        container.innerHTML = '<div class="no-recommendations">Geen specifieke aanbevelingen op dit moment.</div>';
+    if (!pages || pages.length === 0) {
+        container.innerHTML = '<div class="no-pages">Geen pagina\'s geanalyseerd.</div>';
         return;
     }
     
-    container.innerHTML = recommendations.map(recommendation => `
-        <div class="sitewide-recommendation-item">
-            <i class="fas fa-lightbulb"></i>
-            <span>${recommendation}</span>
+    // Show first 10 pages with click functionality
+    const displayPages = pages.slice(0, 10);
+    
+    container.innerHTML = displayPages.map((page, index) => `
+        <div class="sitewide-page-item clickable" onclick="showPageContentModal('${page.url}', ${page.score})">
+            <div class="page-info">
+                <div class="page-url">
+                    <i class="fas fa-file-alt"></i>
+                    <span>${getShortUrl(page.url)}</span>
+                </div>
+                <div class="page-score ${getScoreClass(page.score)}">${page.score}%</div>
+            </div>
+            <div class="page-arrow">
+                <i class="fas fa-chevron-right"></i>
+            </div>
         </div>
-    `).join('');
+    `).join('') + (pages.length > 10 ? `
+        <div class="more-pages">
+            <span>+${pages.length - 10} meer pagina's in de tabel hieronder</span>
+        </div>
+    ` : '');
+}
+
+function getScoreClass(score) {
+    if (score >= 80) return 'excellent';
+    if (score >= 60) return 'good';
+    if (score >= 40) return 'warning';
+    return 'poor';
 }
 
 function showSitewideError(message) {
@@ -2618,4 +2640,212 @@ function getShortUrl(url) {
     } catch {
         return url;
     }
+}
+
+// Show page content modal with AI SEO optimization
+async function showPageContentModal(url, score) {
+    console.log('Opening page content modal for:', url);
+    
+    // Create modal with loading state
+    const modal = document.createElement('div');
+    modal.className = 'page-content-modal';
+    modal.innerHTML = `
+        <div class="page-content-modal-content">
+            <div class="page-content-header">
+                <div class="page-content-title">
+                    <h3><i class="fas fa-file-alt"></i> Pagina Content Optimalisatie</h3>
+                    <div class="page-url-info">
+                        <span class="page-url">${url}</span>
+                        <span class="page-score ${getScoreClass(score)}">SEO Score: ${score}%</span>
+                    </div>
+                </div>
+                <button onclick="this.closest('.page-content-modal').remove()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="page-content-body">
+                <div class="content-columns">
+                    <div class="content-column original">
+                        <div class="column-header">
+                            <h4><i class="fas fa-code"></i> Huidige Content</h4>
+                            <button onclick="refreshPageContent('${url}')" class="refresh-btn">
+                                <i class="fas fa-sync-alt"></i> Ververs
+                            </button>
+                        </div>
+                        <div class="content-area">
+                            <div class="loading-content">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Content laden...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="content-column optimized">
+                        <div class="column-header">
+                            <h4><i class="fas fa-magic"></i> AI SEO Optimalisatie</h4>
+                            <button onclick="generateSEOContent('${url}')" class="generate-btn">
+                                <i class="fas fa-robot"></i> Genereer
+                            </button>
+                        </div>
+                        <div class="content-area">
+                            <div class="placeholder-content">
+                                <i class="fas fa-lightbulb"></i>
+                                <p>Klik "Genereer" voor AI-geoptimaliseerde content</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-actions">
+                    <button onclick="copyOptimizedContent()" class="action-btn primary">
+                        <i class="fas fa-copy"></i> Kopieer Geoptimaliseerde Content
+                    </button>
+                    <button onclick="downloadContentComparison()" class="action-btn secondary">
+                        <i class="fas fa-download"></i> Download Vergelijking
+                    </button>
+                    <button onclick="analyzeSinglePage('${url}')" class="action-btn secondary">
+                        <i class="fas fa-search"></i> Analyseer Pagina
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Load page content
+    loadPageContent(url);
+}
+
+// Load and display page content
+async function loadPageContent(url) {
+    const contentArea = document.querySelector('.content-column.original .content-area');
+    if (!contentArea) return;
+    
+    try {
+        const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Extract key SEO elements
+        const title = doc.querySelector('title')?.textContent || 'Geen title gevonden';
+        const metaDesc = doc.querySelector('meta[name="description"]')?.getAttribute('content') || 'Geen meta description gevonden';
+        const h1 = doc.querySelector('h1')?.textContent || 'Geen H1 gevonden';
+        const h2s = Array.from(doc.querySelectorAll('h2')).map(h => h.textContent).slice(0, 5);
+        
+        // Extract main content (paragraphs)
+        const paragraphs = Array.from(doc.querySelectorAll('p'))
+            .map(p => p.textContent.trim())
+            .filter(text => text.length > 50)
+            .slice(0, 5);
+        
+        contentArea.innerHTML = `
+            <div class="content-section">
+                <h5><i class="fas fa-heading"></i> Title Tag</h5>
+                <div class="content-item">${title}</div>
+            </div>
+            
+            <div class="content-section">
+                <h5><i class="fas fa-paragraph"></i> Meta Description</h5>
+                <div class="content-item">${metaDesc}</div>
+            </div>
+            
+            <div class="content-section">
+                <h5><i class="fas fa-header"></i> H1 Tag</h5>
+                <div class="content-item">${h1}</div>
+            </div>
+            
+            ${h2s.length > 0 ? `
+            <div class="content-section">
+                <h5><i class="fas fa-list"></i> H2 Tags</h5>
+                ${h2s.map(h2 => `<div class="content-item">${h2}</div>`).join('')}
+            </div>
+            ` : ''}
+            
+            ${paragraphs.length > 0 ? `
+            <div class="content-section">
+                <h5><i class="fas fa-align-left"></i> Hoofdcontent</h5>
+                ${paragraphs.map(p => `<div class="content-item">${p.substring(0, 200)}${p.length > 200 ? '...' : ''}</div>`).join('')}
+            </div>
+            ` : ''}
+        `;
+        
+    } catch (error) {
+        console.error('Error loading page content:', error);
+        contentArea.innerHTML = `
+            <div class="error-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Fout bij laden van content: ${error.message}</p>
+                <p>Probeer de pagina direct te bezoeken: <a href="${url}" target="_blank">${url}</a></p>
+            </div>
+        `;
+    }
+}
+
+// Generate AI-optimized SEO content (placeholder for now)
+function generateSEOContent(url) {
+    const contentArea = document.querySelector('.content-column.optimized .content-area');
+    if (!contentArea) return;
+    
+    contentArea.innerHTML = `
+        <div class="generating-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>AI content wordt gegenereerd...</p>
+        </div>
+    `;
+    
+    // Simulate AI generation (replace with actual AI integration)
+    setTimeout(() => {
+        contentArea.innerHTML = `
+            <div class="content-section">
+                <h5><i class="fas fa-magic"></i> Geoptimaliseerde Title</h5>
+                <div class="content-item optimized">SEO Geoptimaliseerde Title - Verbeterd voor Zoekmachines | Brand</div>
+            </div>
+            
+            <div class="content-section">
+                <h5><i class="fas fa-magic"></i> Geoptimaliseerde Meta Description</h5>
+                <div class="content-item optimized">Ontdek onze SEO-geoptimaliseerde content die perfect is afgestemd op zoekmachines. Verhoog je rankings met deze professionele aanpak. Klik hier voor meer info!</div>
+            </div>
+            
+            <div class="content-section">
+                <h5><i class="fas fa-magic"></i> Geoptimaliseerde H1</h5>
+                <div class="content-item optimized">SEO Geoptimaliseerde Hoofdtitel voor Betere Rankings</div>
+            </div>
+            
+            <div class="content-section">
+                <h5><i class="fas fa-lightbulb"></i> SEO Aanbevelingen</h5>
+                <div class="seo-recommendations">
+                    <div class="recommendation"><i class="fas fa-check"></i> Voeg meer relevante keywords toe</div>
+                    <div class="recommendation"><i class="fas fa-check"></i> Verbeter de leesbaarheid van content</div>
+                    <div class="recommendation"><i class="fas fa-check"></i> Optimaliseer afbeelding alt-teksten</div>
+                    <div class="recommendation"><i class="fas fa-check"></i> Voeg interne links toe</div>
+                </div>
+            </div>
+        `;
+    }, 2000);
+}
+
+// Helper functions for modal actions
+function refreshPageContent(url) {
+    loadPageContent(url);
+}
+
+function copyOptimizedContent() {
+    const optimizedContent = document.querySelector('.content-column.optimized .content-area').innerText;
+    navigator.clipboard.writeText(optimizedContent).then(() => {
+        analysisStorage.showSaveNotification('Geoptimaliseerde content gekopieerd!');
+    });
+}
+
+function downloadContentComparison() {
+    analysisStorage.showSaveNotification('Download functie komt binnenkort beschikbaar!');
 }

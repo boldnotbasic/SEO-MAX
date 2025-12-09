@@ -199,88 +199,6 @@
                 </div>
             </div>
 
-            <!-- Website Crawler Section -->
-            <div class="crawler-section">
-                <div class="crawler-card">
-                    <h3><i class="fas fa-spider"></i> Website Crawler</h3>
-                    <p>Ontdek alle URL's op een website voor redirect analyse</p>
-                    
-                    <div class="crawler-controls">
-                        <div class="crawler-input-group">
-                            <button id="useMainUrlBtn" onclick="useMainUrl()" class="use-url-btn">
-                                <i class="fas fa-arrow-down"></i> Gebruik URL hierboven
-                            </button>
-                            <button id="crawlBtn" onclick="startCrawling()">
-                                <i class="fas fa-search"></i> Crawl Website
-                            </button>
-                        </div>
-                        <div class="crawler-url-display">
-                            <span class="url-label">Te crawlen URL:</span>
-                            <span id="crawlerUrlDisplay" class="url-display">Geen URL geselecteerd</span>
-                        </div>
-                        <div class="crawler-options">
-                            <label><input type="checkbox" id="includeExternal" checked> Externe links</label>
-                            <label><input type="checkbox" id="checkRedirects" checked> Check redirects</label>
-                            <label><input type="checkbox" id="findImages" checked> Afbeelding URLs</label>
-                        </div>
-                    </div>
-
-                    <div id="crawlerProgress" class="crawler-progress" style="display: none;">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="crawlerProgressFill"></div>
-                        </div>
-                        <div class="progress-text">
-                            <span id="crawlerStatus">Crawling gestart...</span>
-                            <span id="crawlerCount">0 URLs gevonden</span>
-                        </div>
-                    </div>
-
-                    <div id="crawlerResults" class="crawler-results" style="display: none;">
-                        <div class="results-header">
-                            <h4>Gevonden URLs</h4>
-                            <div class="results-actions">
-                                <button onclick="exportUrls('csv')" class="export-btn">
-                                    <i class="fas fa-download"></i> CSV Export
-                                </button>
-                                <button onclick="exportUrls('txt')" class="export-btn">
-                                    <i class="fas fa-file-text"></i> TXT Export
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="results-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Totaal URLs:</span>
-                                <span class="stat-value" id="totalUrls">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Interne Links:</span>
-                                <span class="stat-value" id="internalUrls">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Externe Links:</span>
-                                <span class="stat-value" id="externalUrls">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Redirects:</span>
-                                <span class="stat-value" id="redirectUrls">0</span>
-                            </div>
-                        </div>
-
-                        <div class="results-tabs">
-                            <button class="tab-btn active" onclick="showTab('all')">Alle URLs</button>
-                            <button class="tab-btn" onclick="showTab('internal')">Intern</button>
-                            <button class="tab-btn" onclick="showTab('external')">Extern</button>
-                            <button class="tab-btn" onclick="showTab('redirects')">Redirects</button>
-                            <button class="tab-btn" onclick="showTab('images')">Afbeeldingen</button>
-                        </div>
-
-                        <div class="results-content">
-                            <div id="urlsList" class="urls-list"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Sitewide SEO Analysis Section -->
             <div class="sitewide-section">
@@ -373,9 +291,9 @@
                                 </div>
                             </div>
                             <div class="insights-column">
-                                <h4><i class="fas fa-lightbulb"></i> Aanbevelingen</h4>
-                                <div id="sitewideRecommendations" class="sitewide-recommendations-list">
-                                    <!-- Recommendations will be populated here -->
+                                <h4><i class="fas fa-file-alt"></i> Gecrawlde Pagina's</h4>
+                                <div id="sitewidePagesList" class="sitewide-pages-list">
+                                    <!-- Pages will be populated here -->
                                 </div>
                             </div>
                         </div>
@@ -412,6 +330,89 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Website Crawler Section -->
+            <div class="crawler-section">
+                <div class="crawler-card">
+                    <h3><i class="fas fa-spider"></i> Website Crawler</h3>
+                    <p>Ontdek alle URL's op een website voor redirect analyse</p>
+                    
+                    <div class="crawler-controls">
+                        <div class="crawler-input-group">
+                            <button id="useMainUrlBtn" onclick="useMainUrl()" class="use-url-btn">
+                                <i class="fas fa-arrow-down"></i> Gebruik URL hierboven
+                            </button>
+                            <button id="crawlBtn" onclick="startCrawling()">
+                                <i class="fas fa-search"></i> Crawl Website
+                            </button>
+                        </div>
+                        <div class="crawler-url-display">
+                            <span class="url-label">Te crawlen URL:</span>
+                            <span id="crawlerUrlDisplay" class="url-display">Geen URL geselecteerd</span>
+                        </div>
+                        <div class="crawler-options">
+                            <label><input type="checkbox" id="includeExternal" checked> Externe links</label>
+                            <label><input type="checkbox" id="checkRedirects" checked> Check redirects</label>
+                            <label><input type="checkbox" id="findImages" checked> Afbeelding URLs</label>
+                        </div>
+                    </div>
+
+                    <div id="crawlerProgress" class="crawler-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="crawlerProgressFill"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="crawlerStatus">Crawling gestart...</span>
+                            <span id="crawlerCount">0 URLs gevonden</span>
+                        </div>
+                    </div>
+
+                    <div id="crawlerResults" class="crawler-results" style="display: none;">
+                        <div class="results-header">
+                            <h4>Gevonden URLs</h4>
+                            <div class="results-actions">
+                                <button onclick="exportUrls('csv')" class="export-btn">
+                                    <i class="fas fa-download"></i> CSV Export
+                                </button>
+                                <button onclick="exportUrls('txt')" class="export-btn">
+                                    <i class="fas fa-file-text"></i> TXT Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="results-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Totaal URLs:</span>
+                                <span class="stat-value" id="totalUrls">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Interne Links:</span>
+                                <span class="stat-value" id="internalUrls">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Externe Links:</span>
+                                <span class="stat-value" id="externalUrls">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Redirects:</span>
+                                <span class="stat-value" id="redirectUrls">0</span>
+                            </div>
+                        </div>
+
+                        <div class="results-tabs">
+                            <button class="tab-btn active" onclick="showTab('all')">Alle URLs</button>
+                            <button class="tab-btn" onclick="showTab('internal')">Intern</button>
+                            <button class="tab-btn" onclick="showTab('external')">Extern</button>
+                            <button class="tab-btn" onclick="showTab('redirects')">Redirects</button>
+                            <button class="tab-btn" onclick="showTab('images')">Afbeeldingen</button>
+                        </div>
+
+                        <div class="results-content">
+                            <div id="urlsList" class="urls-list"></div>
                         </div>
                     </div>
                 </div>

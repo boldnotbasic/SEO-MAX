@@ -3221,10 +3221,26 @@ function extractOriginalContent() {
     const metaElement = originalColumn.querySelector('.content-section:nth-child(2) .content-item');
     const h1Element = originalColumn.querySelector('.content-section:nth-child(3) .content-item');
     
+    // Extract H2 tags - find section with H2 in title
+    const h2Section = Array.from(originalColumn.querySelectorAll('.content-section')).find(section => {
+        const h5 = section.querySelector('h5');
+        return h5 && h5.textContent.includes('H2');
+    });
+    const h2s = h2Section ? Array.from(h2Section.querySelectorAll('.content-item')).map(el => el.textContent || '') : [];
+    
+    // Extract main content paragraphs - find section with Hoofdcontent in title
+    const contentSection = Array.from(originalColumn.querySelectorAll('.content-section')).find(section => {
+        const h5 = section.querySelector('h5');
+        return h5 && h5.textContent.includes('Hoofdcontent');
+    });
+    const paragraphs = contentSection ? Array.from(contentSection.querySelectorAll('.content-item')).map(el => el.textContent || '') : [];
+    
     return {
         title: titleElement?.textContent || '',
         metaDesc: metaElement?.textContent || '',
-        h1: h1Element?.textContent || ''
+        h1: h1Element?.textContent || '',
+        h2s: h2s,
+        paragraphs: paragraphs
     };
 }
 
@@ -3484,6 +3500,12 @@ function createSmartOptimizedContent(originalContent, url) {
     const optimizedMeta = optimizeMeta(originalContent.metaDesc, domain, pathKeywords, originalContent);
     const optimizedH1 = optimizeH1(originalContent.h1, pathKeywords, originalContent);
     
+    // Optimize H2 tags
+    const optimizedH2s = optimizeH2Tags(originalContent.h2s || [], pathKeywords, originalContent);
+    
+    // Optimize main content paragraphs
+    const optimizedContent = optimizeMainContent(originalContent.paragraphs || [], pathKeywords, domain, originalContent);
+    
     // Generate specific recommendations based on analysis
     const recommendations = generateSEORecommendations(originalContent, optimizedTitle, optimizedMeta, optimizedH1, pathKeywords, domain);
     
@@ -3491,6 +3513,8 @@ function createSmartOptimizedContent(originalContent, url) {
         title: optimizedTitle,
         metaDescription: optimizedMeta,
         h1: optimizedH1,
+        h2s: optimizedH2s,
+        content: optimizedContent,
         recommendations: recommendations
     };
 }
@@ -3638,6 +3662,57 @@ function optimizeH1(h1, keywords, originalContent) {
     }
     
     return optimized;
+}
+
+// Optimize H2 tags for better SEO structure
+function optimizeH2Tags(h2s, keywords, originalContent) {
+    if (!h2s || h2s.length === 0) {
+        // Generate H2s based on keywords if none exist
+        return keywords.slice(0, 3).map(keyword => 
+            `${keyword.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: Belangrijke Informatie`
+        );
+    }
+    
+    return h2s.map(h2 => {
+        let optimized = h2.trim();
+        
+        // Only improve if H2 is very short or generic
+        if (optimized.length < 10 || /^(meer|info|details|over|about)$/i.test(optimized)) {
+            const keyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
+            if (keyword && !optimized.toLowerCase().includes(keyword.toLowerCase())) {
+                optimized = `${keyword.charAt(0).toUpperCase() + keyword.slice(1)}: ${optimized}`;
+            }
+        }
+        
+        return optimized;
+    });
+}
+
+// Optimize main content paragraphs
+function optimizeMainContent(paragraphs, keywords, domain, originalContent) {
+    if (!paragraphs || paragraphs.length === 0) {
+        // Generate basic content structure if none exists
+        const keyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : 'onze diensten';
+        return [
+            `Welkom bij ${domain}, waar we gespecialiseerd zijn in ${keyword}. Onze expertise helpt u de beste resultaten te behalen.`,
+            `Met jarenlange ervaring in ${keyword} bieden we professionele oplossingen die aansluiten bij uw specifieke behoeften.`,
+            `Neem vandaag nog contact op om te ontdekken hoe ${domain} u kan helpen met ${keyword}.`
+        ];
+    }
+    
+    return paragraphs.map(paragraph => {
+        let optimized = paragraph.trim();
+        
+        // Only improve very short or incomplete paragraphs
+        if (optimized.length < 50) {
+            const keyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
+            if (keyword && !optimized.toLowerCase().includes(keyword.toLowerCase())) {
+                optimized = `${optimized} Dit is belangrijk voor ${keyword} en helpt u betere resultaten te behalen.`;
+            }
+        }
+        
+        return optimized;
+    });
 }
 
 // Extract keywords from content for better context
@@ -3796,6 +3871,20 @@ function displayOptimizedContent(contentArea, optimizedContent) {
             <h5><i class="fas fa-magic"></i> Geoptimaliseerde H1</h5>
             <div class="content-item optimized">${optimizedContent.h1}</div>
         </div>
+        
+        ${optimizedContent.h2s && optimizedContent.h2s.length > 0 ? `
+        <div class="content-section">
+            <h5><i class="fas fa-magic"></i> Geoptimaliseerde H2 Tags</h5>
+            ${optimizedContent.h2s.map(h2 => `<div class="content-item optimized">${h2}</div>`).join('')}
+        </div>
+        ` : ''}
+        
+        ${optimizedContent.content && optimizedContent.content.length > 0 ? `
+        <div class="content-section">
+            <h5><i class="fas fa-magic"></i> Geoptimaliseerde Hoofdcontent</h5>
+            ${optimizedContent.content.map(paragraph => `<div class="content-item optimized">${paragraph}</div>`).join('')}
+        </div>
+        ` : ''}
         
         <div class="content-section">
             <h5><i class="fas fa-lightbulb"></i> AI SEO Aanbevelingen</h5>

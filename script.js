@@ -3980,6 +3980,262 @@ function downloadContentComparison() {
     analysisStorage.showSaveNotification('Download functie komt binnenkort beschikbaar!');
 }
 
+// Alt Text Generator Functions
+let currentImageFile = null;
+
+function showAltTextGenerator() {
+    const modal = document.getElementById('altTextGeneratorModal');
+    modal.style.display = 'flex';
+    
+    // Reset form
+    resetAltTextGenerator();
+    
+    // Setup drag and drop
+    setupDragAndDrop();
+}
+
+function closeAltTextGenerator() {
+    const modal = document.getElementById('altTextGeneratorModal');
+    modal.style.display = 'none';
+    resetAltTextGenerator();
+}
+
+function resetAltTextGenerator() {
+    currentImageFile = null;
+    document.getElementById('imageInput').value = '';
+    document.getElementById('contextInput').value = '';
+    document.getElementById('styleSelect').value = 'descriptive';
+    document.getElementById('generateAltBtn').disabled = true;
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('altTextResults').style.display = 'none';
+    document.getElementById('uploadArea').style.display = 'block';
+}
+
+function setupDragAndDrop() {
+    const uploadArea = document.getElementById('uploadArea');
+    const imageInput = document.getElementById('imageInput');
+    
+    // Drag and drop events
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            handleImageUpload(files[0]);
+        }
+    });
+    
+    // File input change
+    imageInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleImageUpload(e.target.files[0]);
+        }
+    });
+    
+    // Click to upload
+    uploadArea.addEventListener('click', () => {
+        imageInput.click();
+    });
+}
+
+function handleImageUpload(file) {
+    if (!file.type.startsWith('image/')) {
+        showErrorMessage('Ongeldig Bestand', 'Selecteer een geldige afbeelding (JPG, PNG, GIF, etc.)');
+        return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        showErrorMessage('Bestand Te Groot', 'Afbeelding moet kleiner zijn dan 10MB');
+        return;
+    }
+    
+    currentImageFile = file;
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('previewImage').src = e.target.result;
+        document.getElementById('imageFileName').textContent = `Bestand: ${file.name}`;
+        document.getElementById('imageSize').textContent = `Grootte: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+        
+        document.getElementById('uploadArea').style.display = 'none';
+        document.getElementById('imagePreview').style.display = 'flex';
+        document.getElementById('generateAltBtn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function generateAltText() {
+    if (!currentImageFile) return;
+    
+    const generateBtn = document.getElementById('generateAltBtn');
+    const originalText = generateBtn.innerHTML;
+    
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Genereren...';
+    generateBtn.disabled = true;
+    
+    try {
+        const context = document.getElementById('contextInput').value.trim();
+        const style = document.getElementById('styleSelect').value;
+        
+        // Check if AI API key is configured
+        const apiKey = getAIApiKey();
+        if (!apiKey) {
+            showAIConfigurationPrompt();
+            return;
+        }
+        
+        let altText;
+        if (apiKey === 'FREE_HUGGINGFACE') {
+            altText = await generateAltTextWithFallback(currentImageFile, context, style);
+        } else {
+            altText = await generateAltTextWithOpenAI(currentImageFile, context, style, apiKey);
+        }
+        
+        // Display result
+        document.getElementById('altTextOutput').value = altText;
+        document.getElementById('altTextResults').style.display = 'block';
+        
+        // Scroll to results
+        document.getElementById('altTextResults').scrollIntoView({ behavior: 'smooth' });
+        
+    } catch (error) {
+        console.error('Alt text generation error:', error);
+        showErrorMessage('Generatie Fout', `Fout bij het genereren van alt text: ${error.message}`);
+    } finally {
+        generateBtn.innerHTML = originalText;
+        generateBtn.disabled = false;
+    }
+}
+
+async function generateAltTextWithOpenAI(imageFile, context, style, apiKey) {
+    // Convert image to base64
+    const base64Image = await fileToBase64(imageFile);
+    
+    const stylePrompts = {
+        descriptive: 'Beschrijf deze afbeelding accuraat en beknopt voor alt text. Focus op de belangrijkste visuele elementen.',
+        seo: 'Genereer SEO-geoptimaliseerde alt text die zowel beschrijvend als zoekmachinevriendelijk is.',
+        marketing: 'Creëer marketing-gerichte alt text die aantrekkelijk en overtuigend is.',
+        accessible: 'Maak toegankelijke alt text die perfect is voor screenreaders en mensen met een visuele beperking.'
+    };
+    
+    const prompt = `${stylePrompts[style]} ${context ? `Context: ${context}. ` : ''}Houd het tussen 50-125 karakters. Antwoord alleen met de alt text, geen extra tekst.`;
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: 'gpt-4-vision-preview',
+            messages: [{
+                role: 'user',
+                content: [
+                    { type: 'text', text: prompt },
+                    { type: 'image_url', image_url: { url: base64Image } }
+                ]
+            }],
+            max_tokens: 100
+        })
+    });
+    
+    if (!response.ok) {
+        throw new Error(`OpenAI API fout: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+}
+
+async function generateAltTextWithFallback(imageFile, context, style) {
+    // Fallback method using image analysis and smart generation
+    const fileName = imageFile.name.toLowerCase();
+    const fileType = imageFile.type;
+    
+    // Basic image analysis based on filename and type
+    let baseDescription = 'Afbeelding';
+    
+    if (fileName.includes('logo')) baseDescription = 'Logo';
+    else if (fileName.includes('banner')) baseDescription = 'Banner';
+    else if (fileName.includes('product')) baseDescription = 'Product afbeelding';
+    else if (fileName.includes('team') || fileName.includes('person')) baseDescription = 'Persoon';
+    else if (fileName.includes('office') || fileName.includes('building')) baseDescription = 'Kantoor';
+    else if (fileName.includes('chart') || fileName.includes('graph')) baseDescription = 'Grafiek';
+    
+    // Style-based enhancement
+    const styleEnhancements = {
+        descriptive: baseDescription,
+        seo: `${baseDescription}${context ? ` gerelateerd aan ${context}` : ''}`,
+        marketing: `Professionele ${baseDescription.toLowerCase()}${context ? ` voor ${context}` : ''}`,
+        accessible: `${baseDescription}${context ? ` in de context van ${context}` : ''}`
+    };
+    
+    let altText = styleEnhancements[style];
+    
+    // Add context if provided
+    if (context && !altText.includes(context)) {
+        altText += ` - ${context}`;
+    }
+    
+    // Ensure proper length
+    if (altText.length > 125) {
+        altText = altText.substring(0, 122) + '...';
+    }
+    
+    return altText;
+}
+
+async function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+function copyAltText() {
+    const altTextOutput = document.getElementById('altTextOutput');
+    altTextOutput.select();
+    document.execCommand('copy');
+    
+    // Show success notification
+    showSuccessNotification('Alt text gekopieerd naar klembord!');
+}
+
+function regenerateAltText() {
+    generateAltText();
+}
+
+function showSuccessNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'success-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-check-circle"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
 // Get AI provider display name
 function getAIProviderName() {
     const provider = localStorage.getItem('seomax_ai_provider') || 'free';

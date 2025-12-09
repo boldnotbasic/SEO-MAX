@@ -19,6 +19,10 @@
                             <i class="fab fa-google"></i>
                             <span>Keyword Planner</span>
                         </a>
+                        <button onclick="showAltTextGenerator()" class="tool-btn alt-text-generator">
+                            <i class="fas fa-image"></i>
+                            <span>Alt Text Generator</span>
+                        </button>
                         <a href="https://analytics.google.com/" target="_blank" class="tool-btn analytics">
                             <i class="fas fa-chart-bar"></i>
                             <span>Analytics</span>
@@ -423,6 +427,93 @@
     <button class="logout-btn" onclick="auth.logout()" style="display: none;" id="logoutBtn">
         <i class="fas fa-sign-out-alt"></i> Uitloggen
     </button>
+
+    <!-- Alt Text Generator Modal -->
+    <div id="altTextGeneratorModal" class="alt-text-modal" style="display: none;">
+        <div class="alt-text-modal-content">
+            <div class="alt-text-header">
+                <h2><i class="fas fa-image"></i> AI Alt Text Generator</h2>
+                <button onclick="closeAltTextGenerator()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="alt-text-body">
+                <div class="upload-section">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h3>Sleep je afbeelding hierheen</h3>
+                            <p>of klik om een bestand te selecteren</p>
+                            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                            <button onclick="document.getElementById('imageInput').click()" class="upload-btn">
+                                <i class="fas fa-folder-open"></i> Selecteer Afbeelding
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="image-preview" id="imagePreview" style="display: none;">
+                        <img id="previewImage" src="" alt="Preview">
+                        <div class="image-info">
+                            <p id="imageFileName"></p>
+                            <p id="imageSize"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="generation-section">
+                    <div class="generation-options">
+                        <h4><i class="fas fa-cog"></i> Generatie Opties</h4>
+                        <div class="option-group">
+                            <label>
+                                <input type="text" id="contextInput" placeholder="Optioneel: Context of keyword voor de alt text">
+                                <span class="option-label">Context/Keyword</span>
+                            </label>
+                        </div>
+                        <div class="option-group">
+                            <label>
+                                <select id="styleSelect">
+                                    <option value="descriptive">Beschrijvend</option>
+                                    <option value="seo">SEO Geoptimaliseerd</option>
+                                    <option value="marketing">Marketing Gericht</option>
+                                    <option value="accessible">Toegankelijkheid Focus</option>
+                                </select>
+                                <span class="option-label">Alt Text Stijl</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button onclick="generateAltText()" id="generateAltBtn" class="generate-alt-btn" disabled>
+                        <i class="fas fa-magic"></i> Genereer Alt Text
+                    </button>
+                </div>
+                
+                <div class="results-section" id="altTextResults" style="display: none;">
+                    <h4><i class="fas fa-text-width"></i> Gegenereerde Alt Text</h4>
+                    <div class="alt-text-output">
+                        <textarea id="altTextOutput" readonly></textarea>
+                        <div class="alt-text-actions">
+                            <button onclick="copyAltText()" class="copy-btn">
+                                <i class="fas fa-copy"></i> Kopiëren
+                            </button>
+                            <button onclick="regenerateAltText()" class="regenerate-btn">
+                                <i class="fas fa-redo"></i> Opnieuw Genereren
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alt-text-tips">
+                        <h5><i class="fas fa-lightbulb"></i> Tips voor Alt Text</h5>
+                        <ul>
+                            <li>Houd het tussen 50-125 karakters</li>
+                            <li>Beschrijf wat belangrijk is voor de context</li>
+                            <li>Vermijd "afbeelding van" of "foto van"</li>
+                            <li>Gebruik keywords natuurlijk</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
     <script src="auth.js"></script>

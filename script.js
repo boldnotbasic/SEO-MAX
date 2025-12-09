@@ -1506,8 +1506,26 @@ class SitewideAnalyzer {
     }
 
     async analyzePageSEO(url, keyword) {
+        console.log(`=== ANALYZING PAGE: ${url} ===`);
         const results = await this.seoChecker.analyzeWebsite(url, keyword);
         const score = this.seoChecker.calculateScore();
+        
+        console.log('Raw SEO results:', results);
+        console.log('Title analysis:', results.title);
+        console.log('H1 analysis:', results.h1);
+        console.log('Meta analysis:', results.meta);
+        
+        // Extract data with detailed logging
+        const extractedTitle = results.title?.content || 'Geen title';
+        const extractedH1 = results.h1?.texts?.[0] || 'Geen H1';
+        const extractedMeta = results.meta?.content || 'Geen meta description';
+        
+        console.log('Extracted data:', {
+            title: extractedTitle,
+            h1: extractedH1,
+            meta: extractedMeta
+        });
+        console.log('=== END ANALYSIS ===');
         
         return {
             url: url,
@@ -1515,9 +1533,9 @@ class SitewideAnalyzer {
             results: results,
             score: score,
             // Add direct access to common fields for table display
-            title: results.title?.content || 'Geen title',
-            h1: results.h1?.texts?.[0] || 'Geen H1',
-            metaDescription: results.meta?.content || 'Geen meta description',
+            title: extractedTitle,
+            h1: extractedH1,
+            metaDescription: extractedMeta,
             timestamp: new Date().toISOString(),
             issues: this.extractPageIssues(results)
         };
@@ -2447,22 +2465,37 @@ function displaySitewideTable(pages) {
     tableBody.innerHTML = pages.map(page => {
         const shortUrl = getShortUrl(page.url);
         
-        // Debug: log page data structure
-        console.log('Page data for', page.url, ':', {
-            title: page.title,
-            h1: page.h1,
-            metaDescription: page.metaDescription,
-            results: {
-                title: page.results?.title,
-                h1: page.results?.h1,
-                meta: page.results?.meta
-            }
-        });
+        // Debug: log complete page data structure
+        console.log('=== PAGE DATA DEBUG ===');
+        console.log('URL:', page.url);
+        console.log('Direct fields:', { title: page.title, h1: page.h1, metaDescription: page.metaDescription });
+        console.log('Results object:', page.results);
+        console.log('Results.title:', page.results?.title);
+        console.log('Results.h1:', page.results?.h1);
+        console.log('Results.meta:', page.results?.meta);
+        console.log('========================');
         
-        // Extract data with fallbacks
-        const title = page.title || 'Geen title';
-        const h1 = page.h1 || 'Geen H1';
-        const metaDesc = page.metaDescription || 'Geen meta description';
+        // Extract data with comprehensive fallbacks
+        let title = page.title;
+        if (!title || title === 'Geen title') {
+            title = page.results?.title?.content || 'Geen title';
+        }
+        
+        let h1 = page.h1;
+        if (!h1 || h1 === 'Geen H1') {
+            // Try multiple fallback paths
+            h1 = page.results?.h1?.texts?.[0] || 
+                 page.results?.h1?.content || 
+                 (page.results?.h1?.texts?.length > 0 ? page.results.h1.texts[0] : null) ||
+                 'Geen H1';
+        }
+        
+        let metaDesc = page.metaDescription;
+        if (!metaDesc || metaDesc === 'Geen meta description') {
+            metaDesc = page.results?.meta?.content || 
+                      page.results?.metaDescription?.content ||
+                      'Geen meta description';
+        }
         const issueCount = page.issues ? page.issues.length : 0;
         
         return `

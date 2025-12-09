@@ -1516,8 +1516,8 @@ class SitewideAnalyzer {
             score: score,
             // Add direct access to common fields for table display
             title: results.title?.content || 'Geen title',
-            h1: results.h1?.content || 'Geen H1',
-            metaDescription: results.metaDescription?.content || 'Geen meta description',
+            h1: results.h1?.texts?.[0] || 'Geen H1',
+            metaDescription: results.meta?.content || 'Geen meta description',
             timestamp: new Date().toISOString(),
             issues: this.extractPageIssues(results)
         };
@@ -2452,7 +2452,11 @@ function displaySitewideTable(pages) {
             title: page.title,
             h1: page.h1,
             metaDescription: page.metaDescription,
-            results: page.results
+            results: {
+                title: page.results?.title,
+                h1: page.results?.h1,
+                meta: page.results?.meta
+            }
         });
         
         // Extract data with fallbacks

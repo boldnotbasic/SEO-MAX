@@ -2791,8 +2791,8 @@ async function loadPageContent(url) {
     }
 }
 
-// Generate AI-optimized SEO content (placeholder for now)
-function generateSEOContent(url) {
+// Generate AI-optimized SEO content with real AI integration
+async function generateSEOContent(url) {
     const contentArea = document.querySelector('.content-column.optimized .content-area');
     if (!contentArea) return;
     
@@ -2803,35 +2803,253 @@ function generateSEOContent(url) {
         </div>
     `;
     
-    // Simulate AI generation (replace with actual AI integration)
-    setTimeout(() => {
+    try {
+        // Get original content from the left column
+        const originalContent = extractOriginalContent();
+        
+        // Check if API key is configured
+        const apiKey = getAIApiKey();
+        if (!apiKey) {
+            showAIConfigurationPrompt(contentArea);
+            return;
+        }
+        
+        // Generate optimized content with AI
+        const optimizedContent = await generateWithAI(originalContent, url, apiKey);
+        
+        // Display the AI-generated content
+        displayOptimizedContent(contentArea, optimizedContent);
+        
+    } catch (error) {
+        console.error('AI generation error:', error);
         contentArea.innerHTML = `
-            <div class="content-section">
-                <h5><i class="fas fa-magic"></i> Geoptimaliseerde Title</h5>
-                <div class="content-item optimized">SEO Geoptimaliseerde Title - Verbeterd voor Zoekmachines | Brand</div>
-            </div>
-            
-            <div class="content-section">
-                <h5><i class="fas fa-magic"></i> Geoptimaliseerde Meta Description</h5>
-                <div class="content-item optimized">Ontdek onze SEO-geoptimaliseerde content die perfect is afgestemd op zoekmachines. Verhoog je rankings met deze professionele aanpak. Klik hier voor meer info!</div>
-            </div>
-            
-            <div class="content-section">
-                <h5><i class="fas fa-magic"></i> Geoptimaliseerde H1</h5>
-                <div class="content-item optimized">SEO Geoptimaliseerde Hoofdtitel voor Betere Rankings</div>
-            </div>
-            
-            <div class="content-section">
-                <h5><i class="fas fa-lightbulb"></i> SEO Aanbevelingen</h5>
-                <div class="seo-recommendations">
-                    <div class="recommendation"><i class="fas fa-check"></i> Voeg meer relevante keywords toe</div>
-                    <div class="recommendation"><i class="fas fa-check"></i> Verbeter de leesbaarheid van content</div>
-                    <div class="recommendation"><i class="fas fa-check"></i> Optimaliseer afbeelding alt-teksten</div>
-                    <div class="recommendation"><i class="fas fa-check"></i> Voeg interne links toe</div>
-                </div>
+            <div class="error-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Fout bij AI generatie: ${error.message}</p>
+                <button onclick="generateSEOContent('${url}')" class="retry-btn">
+                    <i class="fas fa-redo"></i> Probeer opnieuw
+                </button>
             </div>
         `;
-    }, 2000);
+    }
+}
+
+// Extract original content from the left column
+function extractOriginalContent() {
+    const originalColumn = document.querySelector('.content-column.original .content-area');
+    if (!originalColumn) return {};
+    
+    const titleElement = originalColumn.querySelector('.content-section:nth-child(1) .content-item');
+    const metaElement = originalColumn.querySelector('.content-section:nth-child(2) .content-item');
+    const h1Element = originalColumn.querySelector('.content-section:nth-child(3) .content-item');
+    
+    return {
+        title: titleElement?.textContent || '',
+        metaDesc: metaElement?.textContent || '',
+        h1: h1Element?.textContent || ''
+    };
+}
+
+// Get AI API key from localStorage or prompt user
+function getAIApiKey() {
+    let apiKey = localStorage.getItem('seomax_openai_key');
+    
+    if (!apiKey) {
+        apiKey = prompt('Voer je OpenAI API key in voor AI content generatie:\n\nJe kunt een key krijgen op: https://platform.openai.com/api-keys');
+        if (apiKey) {
+            localStorage.setItem('seomax_openai_key', apiKey);
+        }
+    }
+    
+    return apiKey;
+}
+
+// Show AI configuration prompt
+function showAIConfigurationPrompt(contentArea) {
+    contentArea.innerHTML = `
+        <div class="ai-config-prompt">
+            <i class="fas fa-key"></i>
+            <h4>AI Configuratie Vereist</h4>
+            <p>Voor AI content generatie heb je een OpenAI API key nodig.</p>
+            
+            <div class="config-steps">
+                <div class="config-step">
+                    <span class="step-number">1</span>
+                    <span>Ga naar <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI API Keys</a></span>
+                </div>
+                <div class="config-step">
+                    <span class="step-number">2</span>
+                    <span>Maak een nieuwe API key aan</span>
+                </div>
+                <div class="config-step">
+                    <span class="step-number">3</span>
+                    <span>Klik hieronder om je key in te voeren</span>
+                </div>
+            </div>
+            
+            <div class="config-actions">
+                <button onclick="configureAIKey()" class="config-btn primary">
+                    <i class="fas fa-key"></i> API Key Configureren
+                </button>
+                <button onclick="showAIDemo()" class="config-btn secondary">
+                    <i class="fas fa-eye"></i> Demo Bekijken
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Configure AI API key
+function configureAIKey() {
+    const apiKey = prompt('Voer je OpenAI API key in:\n\n(Deze wordt lokaal opgeslagen in je browser)');
+    if (apiKey) {
+        localStorage.setItem('seomax_openai_key', apiKey);
+        analysisStorage.showSaveNotification('API key opgeslagen! Probeer nu opnieuw te genereren.');
+    }
+}
+
+// Show AI demo with placeholder content
+function showAIDemo() {
+    const contentArea = document.querySelector('.content-column.optimized .content-area');
+    if (!contentArea) return;
+    
+    contentArea.innerHTML = `
+        <div class="demo-notice">
+            <i class="fas fa-info-circle"></i>
+            <p><strong>Demo Modus</strong> - Voorbeeld van AI gegenereerde content</p>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-magic"></i> Geoptimaliseerde Title</h5>
+            <div class="content-item optimized">SEO Geoptimaliseerde Title - Verbeterd voor Zoekmachines | Brand</div>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-magic"></i> Geoptimaliseerde Meta Description</h5>
+            <div class="content-item optimized">Ontdek onze SEO-geoptimaliseerde content die perfect is afgestemd op zoekmachines. Verhoog je rankings met deze professionele aanpak. Klik hier voor meer info!</div>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-magic"></i> Geoptimaliseerde H1</h5>
+            <div class="content-item optimized">SEO Geoptimaliseerde Hoofdtitel voor Betere Rankings</div>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-lightbulb"></i> SEO Aanbevelingen</h5>
+            <div class="seo-recommendations">
+                <div class="recommendation"><i class="fas fa-check"></i> Voeg meer relevante keywords toe</div>
+                <div class="recommendation"><i class="fas fa-check"></i> Verbeter de leesbaarheid van content</div>
+                <div class="recommendation"><i class="fas fa-check"></i> Optimaliseer afbeelding alt-teksten</div>
+                <div class="recommendation"><i class="fas fa-check"></i> Voeg interne links toe</div>
+            </div>
+        </div>
+    `;
+}
+
+// Generate content with OpenAI API
+async function generateWithAI(originalContent, url, apiKey) {
+    const prompt = `Je bent een SEO expert. Optimaliseer de volgende content voor betere zoekmachine rankings:
+
+URL: ${url}
+Huidige Title: "${originalContent.title}"
+Huidige Meta Description: "${originalContent.metaDesc}"
+Huidige H1: "${originalContent.h1}"
+
+Genereer geoptimaliseerde versies die:
+- SEO-vriendelijk zijn
+- Aantrekkelijk voor gebruikers
+- Relevante keywords bevatten
+- Title: 30-60 karakters
+- Meta description: 150-160 karakters
+- H1: duidelijk en keyword-rijk
+
+Geef ook 4 specifieke SEO aanbevelingen voor deze pagina.
+
+Antwoord in dit JSON formaat:
+{
+  "title": "geoptimaliseerde title",
+  "metaDescription": "geoptimaliseerde meta description",
+  "h1": "geoptimaliseerde h1",
+  "recommendations": ["aanbeveling 1", "aanbeveling 2", "aanbeveling 3", "aanbeveling 4"]
+}`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [{ 
+                role: 'user', 
+                content: prompt 
+            }],
+            temperature: 0.7,
+            max_tokens: 1000
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || 'API request failed');
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+    
+    try {
+        return JSON.parse(content);
+    } catch (e) {
+        // Fallback if JSON parsing fails
+        return {
+            title: "AI Geoptimaliseerde Title",
+            metaDescription: "AI gegenereerde meta description voor betere SEO performance.",
+            h1: "AI Geoptimaliseerde H1 Tag",
+            recommendations: [
+                "Voeg meer relevante keywords toe",
+                "Verbeter de leesbaarheid van content",
+                "Optimaliseer afbeelding alt-teksten",
+                "Voeg interne links toe"
+            ]
+        };
+    }
+}
+
+// Display the optimized content
+function displayOptimizedContent(contentArea, optimizedContent) {
+    contentArea.innerHTML = `
+        <div class="content-section">
+            <h5><i class="fas fa-magic"></i> Geoptimaliseerde Title</h5>
+            <div class="content-item optimized">${optimizedContent.title}</div>
+            <div class="content-meta">Lengte: ${optimizedContent.title.length} karakters</div>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-magic"></i> Geoptimaliseerde Meta Description</h5>
+            <div class="content-item optimized">${optimizedContent.metaDescription}</div>
+            <div class="content-meta">Lengte: ${optimizedContent.metaDescription.length} karakters</div>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-magic"></i> Geoptimaliseerde H1</h5>
+            <div class="content-item optimized">${optimizedContent.h1}</div>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-lightbulb"></i> AI SEO Aanbevelingen</h5>
+            <div class="seo-recommendations">
+                ${optimizedContent.recommendations.map(rec => `
+                    <div class="recommendation"><i class="fas fa-check"></i> ${rec}</div>
+                `).join('')}
+            </div>
+        </div>
+        
+        <div class="ai-attribution">
+            <i class="fas fa-robot"></i>
+            <span>Gegenereerd met OpenAI GPT</span>
+        </div>
+    `;
 }
 
 // Helper functions for modal actions

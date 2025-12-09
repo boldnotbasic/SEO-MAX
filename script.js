@@ -3548,32 +3548,33 @@ function optimizeTitle(title, domain, keywords, originalContent) {
     const emotionalWords = ['Ontdek', 'Leer', 'Verbeter', 'Verhoog', 'Optimaliseer'];
     const hasEmotional = emotionalWords.some(word => optimized.toLowerCase().includes(word.toLowerCase()));
     
-    // Only improve if title is actually lacking
-    if (optimized.length < 45 && !hasPowerWord && allKeywords.length > 0) {
-        const mainKeyword = allKeywords[0].replace(/-/g, ' ');
-        if (!optimized.toLowerCase().includes(mainKeyword.toLowerCase())) {
-            optimized = `${mainKeyword.charAt(0).toUpperCase() + mainKeyword.slice(1)}: ${optimized}`;
-        }
+    // Always apply improvements for better SEO
+    const mainKeyword = allKeywords.length > 0 ? allKeywords[0].replace(/-/g, ' ') : '';
+    
+    // Add power word if missing
+    if (!hasPowerWord && mainKeyword) {
+        const powerWord = powerWords[Math.floor(Math.random() * powerWords.length)];
+        optimized = `${powerWord} ${optimized}`;
     }
     
-    // Add year for guides/tutorials
-    if (!hasYear && (optimized.toLowerCase().includes('gids') || optimized.toLowerCase().includes('handleiding'))) {
+    // Add year for freshness
+    if (!hasYear) {
         optimized = `${optimized} ${currentYear}`;
     }
     
-    // Add emotional trigger for boring titles
-    if (!hasEmotional && optimized.length < 40) {
-        optimized = `Ontdek ${optimized}`;
+    // Add emotional trigger if missing
+    if (!hasEmotional) {
+        optimized = `🚀 ${optimized}`;
+    }
+    
+    // Add keyword context if missing
+    if (mainKeyword && !optimized.toLowerCase().includes(mainKeyword.toLowerCase())) {
+        optimized = `${optimized} - ${mainKeyword.charAt(0).toUpperCase() + mainKeyword.slice(1)} Specialist`;
     }
     
     // Ensure optimal length (50-60 chars is ideal)
     if (optimized.length > 60) {
         optimized = optimized.substring(0, 57) + '...';
-    }
-    
-    // Only return optimized version if it's actually better
-    if (optimized === title) {
-        return title; // No improvement needed
     }
     
     return optimized;
@@ -3594,36 +3595,42 @@ function optimizeMeta(meta, domain, keywords, originalContent) {
     const hasEmotionalWords = /\b(snel|eenvoudig|gratis|beste|nieuw|exclusief|betrouwbaar|professioneel)\b/i.test(optimized);
     const isGoodLength = optimized.length >= 140 && optimized.length <= 160;
     
-    // Only improve if meta description is lacking
-    let needsImprovement = false;
+    // Always apply SEO improvements
+    const contentKeywords = extractKeywordsFromContent(originalContent);
+    const mainKeyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
     
-    // Check if it's too short
-    if (optimized.length < 120) {
-        needsImprovement = true;
-        // Add specific benefits based on content
-        const contentKeywords = extractKeywordsFromContent(originalContent);
-        if (contentKeywords.length > 0) {
-            const benefit = generateBenefitFromKeyword(contentKeywords[0]);
-            optimized = `${optimized} ${benefit}`;
-        }
+    // Add emotional triggers and benefits
+    if (!hasEmotionalWords) {
+        const emotionalTriggers = ['✅ Bewezen effectief', '🚀 Snel resultaat', '💪 Professioneel', '⭐ Beste keuze'];
+        const trigger = emotionalTriggers[Math.floor(Math.random() * emotionalTriggers.length)];
+        optimized = `${trigger}: ${optimized}`;
     }
     
-    // Add CTA only if completely missing and there's space
-    if (!hasCallToAction && optimized.length < 140) {
-        const cta = generateContextualCTA(originalContent, domain);
+    // Add keyword context if missing
+    if (mainKeyword && !optimized.toLowerCase().includes(mainKeyword.toLowerCase())) {
+        optimized = `${optimized} Specialist in ${mainKeyword}.`;
+    }
+    
+    // Add call to action if missing
+    if (!hasCallToAction) {
+        const ctas = ['Ontdek meer →', 'Start vandaag!', 'Neem contact op!', 'Lees verder →'];
+        const cta = ctas[Math.floor(Math.random() * ctas.length)];
         optimized = `${optimized} ${cta}`;
-        needsImprovement = true;
     }
     
-    // Ensure proper length
+    // Add numbers/stats for authority
+    if (!hasNumbers && contentKeywords.length > 0) {
+        optimized = `${optimized} 100% betrouwbaar.`;
+    }
+    
+    // Ensure proper length (140-160 is ideal)
     if (optimized.length > 160) {
         optimized = optimized.substring(0, 157) + '...';
-        needsImprovement = true;
-    }
-    
-    // Return original if no real improvement was made
-    if (!needsImprovement && optimized === meta.trim()) {
-        return meta;
+    } else if (optimized.length < 140) {
+        optimized = `${optimized} Ervaar het verschil met ${domain}.`;
+        if (optimized.length > 160) {
+            optimized = optimized.substring(0, 157) + '...';
+        }
     }
     
     return optimized;
@@ -3668,20 +3675,28 @@ function optimizeH1(h1, keywords, originalContent) {
 function optimizeH2Tags(h2s, keywords, originalContent) {
     if (!h2s || h2s.length === 0) {
         // Generate H2s based on keywords if none exist
-        return keywords.slice(0, 3).map(keyword => 
-            `${keyword.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: Belangrijke Informatie`
-        );
+        const keyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : 'onze diensten';
+        return [
+            `🔥 Waarom ${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Zo Effectief Is`,
+            `💪 De Voordelen van ${keyword.charAt(0).toUpperCase() + keyword.slice(1)}`,
+            `🎯 Hoe ${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Uw Resultaten Verbetert`
+        ];
     }
     
-    return h2s.map(h2 => {
+    return h2s.map((h2, index) => {
         let optimized = h2.trim();
+        const keyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
         
-        // Only improve if H2 is very short or generic
-        if (optimized.length < 10 || /^(meer|info|details|over|about)$/i.test(optimized)) {
-            const keyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
-            if (keyword && !optimized.toLowerCase().includes(keyword.toLowerCase())) {
-                optimized = `${keyword.charAt(0).toUpperCase() + keyword.slice(1)}: ${optimized}`;
-            }
+        // Always apply SEO improvements to H2s
+        const emojis = ['🔥', '💪', '🎯', '✨', '🚀', '⭐'];
+        const emoji = emojis[index % emojis.length];
+        
+        if (keyword && !optimized.toLowerCase().includes(keyword.toLowerCase())) {
+            // Add keyword context
+            optimized = `${emoji} ${optimized} - ${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Focus`;
+        } else {
+            // Just add engaging emoji and power words
+            optimized = `${emoji} ${optimized}`;
         }
         
         return optimized;
@@ -3700,14 +3715,29 @@ function optimizeMainContent(paragraphs, keywords, domain, originalContent) {
         ];
     }
     
-    return paragraphs.map(paragraph => {
+    return paragraphs.map((paragraph, index) => {
         let optimized = paragraph.trim();
+        const keyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
         
-        // Only improve very short or incomplete paragraphs
-        if (optimized.length < 50) {
-            const keyword = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
-            if (keyword && !optimized.toLowerCase().includes(keyword.toLowerCase())) {
-                optimized = `${optimized} Dit is belangrijk voor ${keyword} en helpt u betere resultaten te behalen.`;
+        // Always apply SEO improvements
+        if (keyword) {
+            // Add keyword context and SEO improvements
+            if (index === 0) {
+                // First paragraph - add engaging hook
+                optimized = `🎯 ${optimized} Deze aanpak is bewezen effectief voor ${keyword} en levert meetbare resultaten op.`;
+            } else if (index === paragraphs.length - 1) {
+                // Last paragraph - add call to action
+                optimized = `${optimized} Ontdek vandaag nog hoe ${domain} uw ${keyword} doelen kan realiseren. Neem contact op voor een persoonlijk advies.`;
+            } else {
+                // Middle paragraphs - add authority and benefits
+                optimized = `${optimized} Dit maakt het verschil in ${keyword} prestaties en zorgt voor langdurige resultaten.`;
+            }
+        } else {
+            // Generic improvements without specific keywords
+            if (index === 0) {
+                optimized = `✨ ${optimized} Deze bewezen methode levert uitstekende resultaten op.`;
+            } else {
+                optimized = `${optimized} Dit zorgt voor optimale prestaties en duurzame resultaten.`;
             }
         }
         

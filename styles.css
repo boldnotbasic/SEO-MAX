@@ -2508,15 +2508,18 @@ body {
 }
 
 .pages-table-container {
-    overflow-x: auto;
+    overflow: hidden; /* Remove horizontal scroll */
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
 }
 
 .pages-table {
     width: 100%;
     border-collapse: collapse;
     background: rgba(255, 255, 255, 0.02);
+    table-layout: fixed; /* Fixed layout for consistent column widths */
 }
 
 .pages-table th {
@@ -2528,6 +2531,40 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     cursor: pointer;
     transition: background 0.3s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Fixed column widths */
+.pages-table th:nth-child(1), /* URL */
+.pages-table td:nth-child(1) {
+    width: 25%;
+}
+
+.pages-table th:nth-child(2), /* SEO Score */
+.pages-table td:nth-child(2) {
+    width: 10%;
+}
+
+.pages-table th:nth-child(3), /* Title */
+.pages-table td:nth-child(3) {
+    width: 25%;
+}
+
+.pages-table th:nth-child(4), /* H1 */
+.pages-table td:nth-child(4) {
+    width: 20%;
+}
+
+.pages-table th:nth-child(5), /* Meta Desc */
+.pages-table td:nth-child(5) {
+    width: 25%;
+}
+
+.pages-table th:nth-child(6), /* Issues */
+.pages-table td:nth-child(6) {
+    width: 15%;
 }
 
 .pages-table th:hover {
@@ -2543,6 +2580,10 @@ body {
     padding: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.9);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 0; /* Force text truncation */
 }
 
 .pages-table tr:hover {
@@ -3889,11 +3930,48 @@ body {
 
 @media (max-width: 768px) {
     .pages-table-container {
-        overflow-x: auto;
+        padding: 10px;
+        overflow: hidden; /* Keep no horizontal scroll on mobile */
     }
     
     .pages-table {
-        min-width: 800px;
+        font-size: 0.8rem;
+    }
+    
+    .pages-table th,
+    .pages-table td {
+        padding: 8px 6px;
+    }
+    
+    /* Adjust column widths for mobile */
+    .pages-table th:nth-child(1),
+    .pages-table td:nth-child(1) {
+        width: 30%; /* URL gets more space on mobile */
+    }
+    
+    .pages-table th:nth-child(2),
+    .pages-table td:nth-child(2) {
+        width: 12%; /* Score */
+    }
+    
+    .pages-table th:nth-child(3),
+    .pages-table td:nth-child(3) {
+        width: 20%; /* Title */
+    }
+    
+    .pages-table th:nth-child(4),
+    .pages-table td:nth-child(4) {
+        width: 18%; /* H1 */
+    }
+    
+    .pages-table th:nth-child(5),
+    .pages-table td:nth-child(5) {
+        width: 20%; /* Meta */
+    }
+    
+    .pages-table th:nth-child(6),
+    .pages-table td:nth-child(6) {
+        width: 15%; /* Issues */
     }
 }
 

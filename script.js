@@ -2902,6 +2902,68 @@ function loadPageIssues(url) {
     `;
 }
 
+// Get issue description based on message
+function getIssueDescription(message) {
+    const descriptions = {
+        'Title tag ontbreekt': 'De title tag is essentieel voor SEO en wordt getoond in zoekresultaten. Zonder title tag kunnen zoekmachines je pagina niet goed indexeren.',
+        'Title lengte niet optimaal': 'De ideale lengte voor een title tag is 50-60 karakters. Te korte titles missen kansen, te lange worden afgekort in zoekresultaten.',
+        'H1 tag ontbreekt': 'De H1 tag geeft de hoofdstructuur van je pagina aan en helpt zoekmachines de inhoud te begrijpen.',
+        'Meerdere H1 tags': 'Er mag maar één H1 tag per pagina zijn voor optimale SEO structuur.',
+        'Meta description ontbreekt': 'Meta descriptions worden getoond in zoekresultaten en beïnvloeden de click-through rate.',
+        'Meta description te kort': 'Meta descriptions van minder dan 120 karakters benutten niet de volledige ruimte in zoekresultaten.',
+        'Meta description te lang': 'Meta descriptions langer dan 160 karakters worden afgekort in zoekresultaten.'
+    };
+    
+    return descriptions[message] || 'Dit issue kan de SEO prestaties van je pagina beïnvloeden.';
+}
+
+// Get issue recommendations based on message
+function getIssueRecommendations(message) {
+    const recommendations = {
+        'Title tag ontbreekt': [
+            'Voeg een <title> tag toe in de <head> sectie',
+            'Gebruik relevante keywords in de title',
+            'Houd de title tussen 50-60 karakters'
+        ],
+        'Title lengte niet optimaal': [
+            'Pas de title aan naar 50-60 karakters',
+            'Gebruik krachtige, beschrijvende woorden',
+            'Plaats belangrijke keywords vooraan'
+        ],
+        'H1 tag ontbreekt': [
+            'Voeg een <h1> tag toe aan je pagina',
+            'Gebruik de H1 voor de hoofdtitel van je content',
+            'Integreer relevante keywords natuurlijk'
+        ],
+        'Meerdere H1 tags': [
+            'Gebruik slechts één H1 tag per pagina',
+            'Vervang extra H1 tags door H2, H3, etc.',
+            'Behoud hiërarchische structuur'
+        ],
+        'Meta description ontbreekt': [
+            'Voeg een meta description tag toe',
+            'Schrijf een aantrekkelijke samenvatting van 140-160 karakters',
+            'Gebruik een call-to-action'
+        ],
+        'Meta description te kort': [
+            'Breid de meta description uit naar 140-160 karakters',
+            'Voeg meer details over je content toe',
+            'Gebruik emotionele triggers'
+        ],
+        'Meta description te lang': [
+            'Kort de meta description in tot maximaal 160 karakters',
+            'Focus op de belangrijkste informatie',
+            'Behoud de call-to-action'
+        ]
+    };
+    
+    return recommendations[message] || [
+        'Analyseer het specifieke probleem',
+        'Implementeer best practices voor SEO',
+        'Test de wijzigingen na implementatie'
+    ];
+}
+
 // Load and display page content with multiple fallback methods
 async function loadPageContent(url) {
     const contentArea = document.querySelector('.content-column.original .content-area');

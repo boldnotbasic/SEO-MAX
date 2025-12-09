@@ -2330,6 +2330,7 @@ function displaySitewideResults(results) {
     // Display issues and pages list
     displaySitewideIssues(results.issues);
     displaySitewidePagesList(results.pages);
+    displaySitewideTable(results.pages);
     
     console.log('Sitewide results ready:', results);
     analysisStorage.showSaveNotification('Sitewide analyse voltooid!');
@@ -2427,6 +2428,66 @@ function getScoreClass(score) {
     if (score >= 60) return 'good';
     if (score >= 40) return 'warning';
     return 'poor';
+}
+
+// Display sitewide table with page details
+function displaySitewideTable(pages) {
+    const tableBody = document.getElementById('sitewideTableBody');
+    if (!tableBody) return;
+    
+    if (!pages || pages.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="no-data">Geen pagina\'s geanalyseerd.</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = pages.map(page => {
+        const shortUrl = getShortUrl(page.url);
+        const title = page.title || 'Geen title';
+        const h1 = page.h1 || 'Geen H1';
+        const metaDesc = page.metaDescription || 'Geen meta description';
+        const issueCount = page.issues ? page.issues.length : 0;
+        
+        return `
+            <tr class="page-row" data-url="${page.url}">
+                <td class="url-cell">
+                    <div class="url-content">
+                        <i class="fas fa-link"></i>
+                        <a href="${page.url}" target="_blank" title="${page.url}">${shortUrl}</a>
+                    </div>
+                </td>
+                <td class="score-cell">
+                    <span class="score-badge ${getScoreClass(page.score)}">${page.score}%</span>
+                </td>
+                <td class="title-cell" title="${title}">
+                    ${title.length > 50 ? title.substring(0, 50) + '...' : title}
+                </td>
+                <td class="h1-cell" title="${h1}">
+                    ${h1.length > 40 ? h1.substring(0, 40) + '...' : h1}
+                </td>
+                <td class="meta-cell" title="${metaDesc}">
+                    ${metaDesc.length > 60 ? metaDesc.substring(0, 60) + '...' : metaDesc}
+                </td>
+                <td class="issues-cell">
+                    <span class="issue-count ${issueCount > 0 ? 'has-issues' : 'no-issues'}">
+                        ${issueCount} ${issueCount === 1 ? 'issue' : 'issues'}
+                    </span>
+                </td>
+                <td class="actions-cell">
+                    <div class="action-buttons">
+                        <button onclick="showPageContentModal('${page.url}', ${page.score})" class="action-btn optimize" title="AI Optimalisatie">
+                            <i class="fas fa-magic"></i>
+                        </button>
+                        <button onclick="analyzeSinglePage('${page.url}')" class="action-btn analyze" title="Analyseer Pagina">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button onclick="copyToClipboard('${page.url}')" class="action-btn copy" title="Kopieer URL">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function showSitewideError(message) {

@@ -3697,6 +3697,194 @@ body {
     }
 }
 
+/* Sitewide Table Styling */
+.pages-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.pages-table th {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.pages-table th:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.pages-table th i {
+    margin-left: 4px;
+    opacity: 0.7;
+}
+
+.pages-table td {
+    padding: 12px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.page-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.url-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.url-content i {
+    color: #60a5fa;
+    font-size: 0.9rem;
+}
+
+.url-content a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.url-content a:hover {
+    text-decoration: underline;
+}
+
+.score-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 45px;
+    display: inline-block;
+}
+
+.score-badge.excellent {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.score-badge.good {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.score-badge.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.score-badge.poor {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.title-cell, .h1-cell, .meta-cell {
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+.issue-count {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.issue-count.has-issues {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.issue-count.no-issues {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.action-btn {
+    padding: 6px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.action-btn.optimize {
+    background: rgba(147, 51, 234, 0.2);
+    color: #9333ea;
+}
+
+.action-btn.optimize:hover {
+    background: rgba(147, 51, 234, 0.3);
+}
+
+.action-btn.analyze {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.action-btn.analyze:hover {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+.action-btn.copy {
+    background: rgba(107, 114, 128, 0.2);
+    color: #9ca3af;
+}
+
+.action-btn.copy:hover {
+    background: rgba(107, 114, 128, 0.3);
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+}
+
+/* Responsive Table */
+@media (max-width: 1200px) {
+    .pages-table th,
+    .pages-table td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .action-btn {
+        padding: 4px 6px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pages-table-container {
+        overflow-x: auto;
+    }
+    
+    .pages-table {
+        min-width: 800px;
+    }
+}
+
 /* Responsive Modal */
 @media (max-width: 768px) {
     .page-content-modal {

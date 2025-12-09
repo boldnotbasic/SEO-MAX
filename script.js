@@ -3301,10 +3301,10 @@ function createSmartOptimizedContent(originalContent, url) {
     const domain = new URL(url).hostname.replace('www.', '');
     const pathKeywords = new URL(url).pathname.split('/').filter(p => p.length > 2);
     
-    // Basic SEO optimization rules
-    const optimizedTitle = optimizeTitle(originalContent.title, domain, pathKeywords);
-    const optimizedMeta = optimizeMeta(originalContent.metaDesc, domain, pathKeywords);
-    const optimizedH1 = optimizeH1(originalContent.h1, pathKeywords);
+    // Advanced SEO optimization with content analysis
+    const optimizedTitle = optimizeTitle(originalContent.title, domain, pathKeywords, originalContent);
+    const optimizedMeta = optimizeMeta(originalContent.metaDesc, domain, pathKeywords, originalContent);
+    const optimizedH1 = optimizeH1(originalContent.h1, pathKeywords, originalContent);
     
     // Generate specific recommendations based on analysis
     const recommendations = generateSEORecommendations(originalContent, optimizedTitle, optimizedMeta, optimizedH1, pathKeywords, domain);
@@ -3317,41 +3317,68 @@ function createSmartOptimizedContent(originalContent, url) {
     };
 }
 
-// Basic title optimization
-function optimizeTitle(title, domain, keywords) {
+// Advanced title optimization with content analysis
+function optimizeTitle(title, domain, keywords, originalContent) {
     if (!title || title === 'Geen title gevonden') {
         return `SEO Geoptimaliseerde Pagina | ${domain}`;
     }
     
-    // Remove common non-SEO elements
-    let optimized = title
-        .replace(/\s*\|\s*$/, '') // Remove trailing |
-        .replace(/\s*-\s*$/, '') // Remove trailing -
-        .trim();
+    // Analyze current title for improvements
+    let optimized = title.trim();
     
-    // Add SEO improvements
-    const keywordText = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
+    // Extract key terms from content for context
+    const contentKeywords = extractKeywordsFromContent(originalContent);
+    const urlKeywords = keywords.length > 0 ? keywords : [];
+    const allKeywords = [...new Set([...contentKeywords, ...urlKeywords])];
     
-    // If title is too short, enhance it
-    if (optimized.length < 30 && keywordText) {
-        optimized = `${optimized} - ${keywordText.charAt(0).toUpperCase() + keywordText.slice(1)} Specialist`;
+    // Check if title needs improvement
+    const improvements = [];
+    
+    // 1. Add power words if missing
+    const powerWords = ['Expert', 'Gids', 'Complete', 'Beste', 'Professioneel', 'Premium', 'Ultieme'];
+    const hasPowerWord = powerWords.some(word => optimized.toLowerCase().includes(word.toLowerCase()));
+    
+    // 2. Add year for freshness if content seems evergreen
+    const currentYear = new Date().getFullYear();
+    const hasYear = optimized.includes(currentYear.toString());
+    
+    // 3. Check for emotional triggers
+    const emotionalWords = ['Ontdek', 'Leer', 'Verbeter', 'Verhoog', 'Optimaliseer'];
+    const hasEmotional = emotionalWords.some(word => optimized.toLowerCase().includes(word.toLowerCase()));
+    
+    // Only improve if title is actually lacking
+    if (optimized.length < 45 && !hasPowerWord && allKeywords.length > 0) {
+        const mainKeyword = allKeywords[0].replace(/-/g, ' ');
+        if (!optimized.toLowerCase().includes(mainKeyword.toLowerCase())) {
+            optimized = `${mainKeyword.charAt(0).toUpperCase() + mainKeyword.slice(1)}: ${optimized}`;
+        }
     }
     
-    // Add domain if not present and under 50 chars
-    if (!optimized.toLowerCase().includes(domain.toLowerCase()) && optimized.length < 45) {
-        optimized = `${optimized} | ${domain}`;
+    // Add year for guides/tutorials
+    if (!hasYear && (optimized.toLowerCase().includes('gids') || optimized.toLowerCase().includes('handleiding'))) {
+        optimized = `${optimized} ${currentYear}`;
     }
     
-    // Ensure proper length
+    // Add emotional trigger for boring titles
+    if (!hasEmotional && optimized.length < 40) {
+        optimized = `Ontdek ${optimized}`;
+    }
+    
+    // Ensure optimal length (50-60 chars is ideal)
     if (optimized.length > 60) {
         optimized = optimized.substring(0, 57) + '...';
+    }
+    
+    // Only return optimized version if it's actually better
+    if (optimized === title) {
+        return title; // No improvement needed
     }
     
     return optimized;
 }
 
-// Basic meta description optimization
-function optimizeMeta(meta, domain, keywords) {
+// Advanced meta description optimization
+function optimizeMeta(meta, domain, keywords, originalContent) {
     if (!meta || meta === 'Geen meta description gevonden') {
         const keywordText = keywords.length > 0 ? keywords.join(', ') : 'onze diensten';
         return `Ontdek ${keywordText} bij ${domain}. Professionele oplossingen voor al je behoeften. Neem contact op voor meer informatie.`;
@@ -3359,112 +3386,208 @@ function optimizeMeta(meta, domain, keywords) {
     
     let optimized = meta.trim();
     
-    // Add call-to-action if missing and space allows
-    const hasCallToAction = /\b(klik|bezoek|ontdek|lees meer|contact|bekijk|probeer)\b/i.test(optimized);
-    const keywordText = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
+    // Analyze if current meta is already good
+    const hasCallToAction = /\b(klik|bezoek|ontdek|leer|vind|krijg|download|probeer|koop|bestel|neem contact|lees meer)\b/i.test(optimized);
+    const hasNumbers = /\d+/.test(optimized);
+    const hasEmotionalWords = /\b(snel|eenvoudig|gratis|beste|nieuw|exclusief|betrouwbaar|professioneel)\b/i.test(optimized);
+    const isGoodLength = optimized.length >= 140 && optimized.length <= 160;
     
-    // Enhance meta description with keywords and CTA
-    if (!hasCallToAction && optimized.length < 120) {
-        if (keywordText && !optimized.toLowerCase().includes(keywordText.toLowerCase())) {
-            optimized = `${optimized} Ontdek meer over ${keywordText} bij ${domain}.`;
-        } else {
-            optimized = `${optimized} Bezoek ${domain} voor meer informatie.`;
+    // Only improve if meta description is lacking
+    let needsImprovement = false;
+    
+    // Check if it's too short
+    if (optimized.length < 120) {
+        needsImprovement = true;
+        // Add specific benefits based on content
+        const contentKeywords = extractKeywordsFromContent(originalContent);
+        if (contentKeywords.length > 0) {
+            const benefit = generateBenefitFromKeyword(contentKeywords[0]);
+            optimized = `${optimized} ${benefit}`;
         }
     }
     
-    // Add domain mention if not present and space allows
-    if (!optimized.toLowerCase().includes(domain.toLowerCase()) && optimized.length < 130) {
-        optimized = `${optimized} - ${domain}`;
+    // Add CTA only if completely missing and there's space
+    if (!hasCallToAction && optimized.length < 140) {
+        const cta = generateContextualCTA(originalContent, domain);
+        optimized = `${optimized} ${cta}`;
+        needsImprovement = true;
     }
     
-    // Ensure proper length (150-160 chars is optimal)
+    // Ensure proper length
     if (optimized.length > 160) {
         optimized = optimized.substring(0, 157) + '...';
-    } else if (optimized.length < 120) {
-        optimized = `${optimized} Professionele kwaliteit gegarandeerd.`;
+        needsImprovement = true;
     }
     
-    return optimized.length > 160 ? optimized.substring(0, 157) + '...' : optimized;
+    // Return original if no real improvement was made
+    if (!needsImprovement && optimized === meta.trim()) {
+        return meta;
+    }
+    
+    return optimized;
 }
 
-// Basic H1 optimization
-function optimizeH1(h1, keywords) {
+// Advanced H1 optimization
+function optimizeH1(h1, keywords, originalContent) {
     if (!h1 || h1 === 'Geen H1 gevonden') {
         const keyword = keywords.length > 0 ? keywords[0] : 'Welkom';
         return `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} - Professionele Oplossingen`;
     }
     
     let optimized = h1.trim();
-    const keywordText = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
     
-    // Add keyword if not present and H1 is short
-    if (keywordText && !optimized.toLowerCase().includes(keywordText.toLowerCase()) && optimized.length < 40) {
-        optimized = `${keywordText.charAt(0).toUpperCase() + keywordText.slice(1)}: ${optimized}`;
+    // Analyze if H1 is already good
+    const hasKeyword = keywords.some(kw => optimized.toLowerCase().includes(kw.toLowerCase()));
+    const isDescriptive = optimized.length > 20;
+    const hasNumbers = /\d+/.test(optimized);
+    const hasPowerWords = /\b(beste|complete|ultieme|expert|professioneel|gids|handleiding)\b/i.test(optimized);
+    
+    // Only improve if H1 is actually lacking
+    let needsImprovement = false;
+    
+    // If H1 is very short and vague, improve it
+    if (optimized.length < 15 && !isDescriptive) {
+        const contentKeywords = extractKeywordsFromContent(originalContent);
+        if (contentKeywords.length > 0) {
+            optimized = `${contentKeywords[0].replace(/-/g, ' ')}: ${optimized}`;
+            needsImprovement = true;
+        }
     }
     
-    // Add power words for SEO
-    const powerWords = ['Professioneel', 'Expert', 'Specialist', 'Premium', 'Beste'];
-    const hasPowerWord = powerWords.some(word => optimized.toLowerCase().includes(word.toLowerCase()));
-    
-    if (!hasPowerWord && optimized.length < 50) {
-        optimized = `${optimized} - Professioneel & Betrouwbaar`;
+    // Return original if it's already good
+    if (!needsImprovement) {
+        return h1;
     }
     
     return optimized;
+}
+
+// Extract keywords from content for better context
+function extractKeywordsFromContent(originalContent) {
+    const keywords = [];
+    
+    // Extract from title
+    if (originalContent.title) {
+        const titleWords = originalContent.title.toLowerCase()
+            .split(/\s+/)
+            .filter(word => word.length > 3 && !['voor', 'van', 'het', 'een', 'met', 'bij', 'over'].includes(word));
+        keywords.push(...titleWords);
+    }
+    
+    // Extract from meta description
+    if (originalContent.metaDesc) {
+        const metaWords = originalContent.metaDesc.toLowerCase()
+            .split(/\s+/)
+            .filter(word => word.length > 4 && !['voor', 'van', 'het', 'een', 'met', 'bij', 'over', 'deze', 'zijn'].includes(word));
+        keywords.push(...metaWords.slice(0, 3)); // Top 3 words
+    }
+    
+    return [...new Set(keywords)].slice(0, 5); // Unique, max 5
+}
+
+// Generate contextual benefit based on keyword
+function generateBenefitFromKeyword(keyword) {
+    const benefits = {
+        'supplement': 'Verhoog je energie en vitaliteit.',
+        'energie': 'Voel je fitter en alerter.',
+        'gezondheid': 'Investeer in je welzijn.',
+        'voeding': 'Optimaliseer je dagelijkse intake.',
+        'training': 'Bereik je fitnessdoelen sneller.',
+        'product': 'Kwaliteit die je kunt vertrouwen.',
+        'service': 'Persoonlijke service gegarandeerd.',
+        'faq': 'Krijg antwoorden op al je vragen.',
+        'contact': 'Neem vandaag nog contact op.',
+        'info': 'Ontdek alle details en voordelen.'
+    };
+    
+    for (const [key, benefit] of Object.entries(benefits)) {
+        if (keyword.toLowerCase().includes(key)) {
+            return benefit;
+        }
+    }
+    
+    return 'Ontdek de voordelen voor jezelf.';
+}
+
+// Generate contextual call-to-action
+function generateContextualCTA(originalContent, domain) {
+    const content = (originalContent.title + ' ' + originalContent.metaDesc + ' ' + originalContent.h1).toLowerCase();
+    
+    if (content.includes('faq') || content.includes('vragen')) {
+        return `Vind antwoorden op ${domain}.`;
+    }
+    if (content.includes('contact') || content.includes('bereik')) {
+        return `Neem contact op via ${domain}.`;
+    }
+    if (content.includes('product') || content.includes('supplement')) {
+        return `Bestel nu op ${domain}.`;
+    }
+    if (content.includes('service') || content.includes('dienst')) {
+        return `Ontdek onze diensten op ${domain}.`;
+    }
+    if (content.includes('info') || content.includes('meer')) {
+        return `Lees meer op ${domain}.`;
+    }
+    
+    return `Bezoek ${domain} voor meer informatie.`;
 }
 
 // Generate specific SEO recommendations based on content analysis
 function generateSEORecommendations(originalContent, optimizedTitle, optimizedMeta, optimizedH1, keywords, domain) {
     const recommendations = [];
     
-    // Title analysis
-    if (originalContent.title && originalContent.title.length < 30) {
-        recommendations.push(`Title te kort (${originalContent.title.length} chars) - voeg meer beschrijvende woorden toe`);
-    } else if (originalContent.title && originalContent.title.length > 60) {
-        recommendations.push(`Title te lang (${originalContent.title.length} chars) - kort in tot 60 karakters`);
-    }
+    // Only suggest improvements that are actually needed
+    const contentKeywords = extractKeywordsFromContent(originalContent);
     
-    // Meta description analysis
-    if (originalContent.metaDesc && originalContent.metaDesc.length < 120) {
-        recommendations.push(`Meta description te kort (${originalContent.metaDesc.length} chars) - voeg call-to-action toe`);
-    } else if (originalContent.metaDesc && originalContent.metaDesc.length > 160) {
-        recommendations.push(`Meta description te lang (${originalContent.metaDesc.length} chars) - kort in tot 160 karakters`);
-    }
-    
-    // Keyword analysis
-    const keywordText = keywords.length > 0 ? keywords[0].replace(/-/g, ' ') : '';
-    if (keywordText) {
-        const titleHasKeyword = originalContent.title?.toLowerCase().includes(keywordText.toLowerCase());
-        const metaHasKeyword = originalContent.metaDesc?.toLowerCase().includes(keywordText.toLowerCase());
-        const h1HasKeyword = originalContent.h1?.toLowerCase().includes(keywordText.toLowerCase());
+    // Title analysis - only if there are real issues
+    if (originalContent.title) {
+        if (originalContent.title.length < 30) {
+            recommendations.push(`Title te kort (${originalContent.title.length} chars) - voeg beschrijvende woorden toe voor betere CTR`);
+        } else if (originalContent.title.length > 60) {
+            recommendations.push(`Title wordt afgekort in zoekresultaten (${originalContent.title.length} chars) - kort in tot 60 karakters`);
+        }
         
-        if (!titleHasKeyword) {
-            recommendations.push(`Voeg hoofdkeyword "${keywordText}" toe aan de title tag`);
-        }
-        if (!metaHasKeyword) {
-            recommendations.push(`Integreer keyword "${keywordText}" natuurlijk in meta description`);
-        }
-        if (!h1HasKeyword) {
-            recommendations.push(`Gebruik keyword "${keywordText}" in de H1 tag voor betere relevantie`);
+        // Check for missing year in evergreen content
+        const currentYear = new Date().getFullYear();
+        if (!originalContent.title.includes(currentYear.toString()) && 
+            (originalContent.title.toLowerCase().includes('gids') || originalContent.title.toLowerCase().includes('tips'))) {
+            recommendations.push(`Voeg ${currentYear} toe aan title voor freshness signaal`);
         }
     }
     
-    // Domain branding
-    if (originalContent.title && !originalContent.title.toLowerCase().includes(domain.toLowerCase())) {
-        recommendations.push(`Voeg merknaam "${domain}" toe aan title voor brand awareness`);
+    // Meta description analysis - be more specific
+    if (originalContent.metaDesc) {
+        if (originalContent.metaDesc.length < 120) {
+            recommendations.push(`Meta description onderbenut (${originalContent.metaDesc.length} chars) - gebruik 140-160 karakters voor maximale impact`);
+        } else if (originalContent.metaDesc.length > 160) {
+            recommendations.push(`Meta description wordt afgekort (${originalContent.metaDesc.length} chars) - houd het onder 160 karakters`);
+        }
+        
+        // Check for missing emotional triggers
+        const hasEmotionalWords = /\b(beste|gratis|snel|eenvoudig|nieuw|exclusief|betrouwbaar|professioneel)\b/i.test(originalContent.metaDesc);
+        if (!hasEmotionalWords) {
+            recommendations.push('Voeg emotionele triggers toe aan meta description (bijv. "beste", "gratis", "snel")');
+        }
     }
     
-    // Call-to-action analysis
-    const hasCallToAction = originalContent.metaDesc && /\b(klik|bezoek|ontdek|lees meer|contact|bekijk|probeer|koop|bestel)\b/i.test(originalContent.metaDesc);
-    if (!hasCallToAction) {
-        recommendations.push('Voeg een duidelijke call-to-action toe aan meta description');
+    // Content-specific recommendations based on detected keywords
+    if (contentKeywords.includes('faq') || contentKeywords.includes('vragen')) {
+        recommendations.push('Structureer FAQ met schema markup voor featured snippets');
+    } else if (contentKeywords.includes('product') || contentKeywords.includes('supplement')) {
+        recommendations.push('Voeg productreviews en ratings toe voor betere conversie');
+    } else if (contentKeywords.includes('contact')) {
+        recommendations.push('Voeg lokale SEO elementen toe (adres, telefoonnummer, openingstijden)');
     }
     
-    // Generic SEO recommendations if not enough specific ones
+    // Advanced SEO recommendations based on content type
     if (recommendations.length < 3) {
-        recommendations.push('Optimaliseer afbeelding alt-teksten met relevante keywords');
-        recommendations.push('Voeg interne links toe naar gerelateerde pagina\'s');
-        recommendations.push('Verbeter pagina laadsnelheid voor betere gebruikerservaring');
+        if (originalContent.title && originalContent.title.toLowerCase().includes('gids')) {
+            recommendations.push('Voeg inhoudsopgave toe voor betere gebruikerservaring en SEO');
+        } else if (originalContent.metaDesc && originalContent.metaDesc.includes('€')) {
+            recommendations.push('Implementeer product schema markup voor rijke snippets');
+        } else {
+            recommendations.push('Optimaliseer Core Web Vitals voor betere ranking signalen');
+        }
     }
     
     return recommendations.slice(0, 4); // Max 4 recommendations

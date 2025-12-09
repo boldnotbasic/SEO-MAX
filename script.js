@@ -2458,7 +2458,7 @@ function displaySitewideTable(pages) {
     if (!tableBody) return;
     
     if (!pages || pages.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="no-data">Geen pagina\'s geanalyseerd.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="no-data">Geen pagina\'s geanalyseerd.</td></tr>';
         return;
     }
     
@@ -2499,11 +2499,11 @@ function displaySitewideTable(pages) {
         const issueCount = page.issues ? page.issues.length : 0;
         
         return `
-            <tr class="page-row" data-url="${page.url}">
+            <tr class="page-row clickable-row" data-url="${page.url}" onclick="showPageContentModal('${page.url}', ${page.score})" title="Klik om pagina te optimaliseren">
                 <td class="url-cell">
                     <div class="url-content">
                         <i class="fas fa-link"></i>
-                        <a href="${page.url}" target="_blank" title="${page.url}">${shortUrl}</a>
+                        <a href="${page.url}" target="_blank" title="${page.url}" onclick="event.stopPropagation()">${shortUrl}</a>
                     </div>
                 </td>
                 <td class="score-cell">
@@ -2522,19 +2522,6 @@ function displaySitewideTable(pages) {
                     <span class="issue-count ${issueCount > 0 ? 'has-issues' : 'no-issues'}">
                         ${issueCount} ${issueCount === 1 ? 'issue' : 'issues'}
                     </span>
-                </td>
-                <td class="actions-cell">
-                    <div class="action-buttons">
-                        <button onclick="showPageContentModal('${page.url}', ${page.score})" class="action-btn optimize" title="AI Optimalisatie">
-                            <i class="fas fa-magic"></i>
-                        </button>
-                        <button onclick="analyzeSinglePage('${page.url}')" class="action-btn analyze" title="Analyseer Pagina">
-                            <i class="fas fa-search"></i>
-                        </button>
-                        <button onclick="copyToClipboard('${page.url}')" class="action-btn copy" title="Kopieer URL">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
                 </td>
             </tr>
         `;
@@ -2809,6 +2796,18 @@ async function showPageContentModal(url, score) {
                     </div>
                 </div>
                 
+                <div class="page-issues-section">
+                    <div class="issues-header">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Pagina Issues</h4>
+                    </div>
+                    <div class="issues-content" id="pageIssuesContent">
+                        <div class="loading-issues">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Issues laden...</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="content-actions">
                     <button onclick="copyOptimizedContent()" class="action-btn primary">
                         <i class="fas fa-copy"></i> Kopieer Geoptimaliseerde Content
@@ -2833,8 +2832,74 @@ async function showPageContentModal(url, score) {
         }
     });
     
-    // Load page content
+    // Load page content and issues
     loadPageContent(url);
+    loadPageIssues(url);
+}
+
+// Load and display page issues
+function loadPageIssues(url) {
+    const issuesContent = document.getElementById('pageIssuesContent');
+    if (!issuesContent) return;
+    
+    // Find page data in sitewide results
+    if (!currentSitewideResults || !currentSitewideResults.pages) {
+        issuesContent.innerHTML = `
+            <div class="no-issues">
+                <i class="fas fa-info-circle"></i>
+                <p>Geen sitewide data beschikbaar. Voer eerst een sitewide analyse uit.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const pageData = currentSitewideResults.pages.find(page => page.url === url);
+    if (!pageData || !pageData.issues || pageData.issues.length === 0) {
+        issuesContent.innerHTML = `
+            <div class="no-issues success">
+                <i class="fas fa-check-circle"></i>
+                <p>Geen issues gevonden op deze pagina!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Display issues
+    issuesContent.innerHTML = `
+        <div class="issues-list">
+            ${pageData.issues.map((issue, index) => `
+                <div class="issue-item ${issue.type}">
+                    <div class="issue-header">
+                        <i class="fas ${issue.type === 'error' ? 'fa-times-circle' : 'fa-exclamation-triangle'}"></i>
+                        <span class="issue-message">${issue.message}</span>
+                        <span class="issue-type-badge ${issue.type}">${issue.type === 'error' ? 'Kritiek' : 'Waarschuwing'}</span>
+                    </div>
+                    <div class="issue-description">
+                        ${getIssueDescription(issue.message)}
+                    </div>
+                    <div class="issue-recommendations">
+                        <strong>Oplossing:</strong>
+                        <ul>
+                            ${getIssueRecommendations(issue.message).map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+        
+        <div class="issues-summary">
+            <div class="summary-stats">
+                <span class="stat-item error">
+                    <i class="fas fa-times-circle"></i>
+                    ${pageData.issues.filter(i => i.type === 'error').length} Kritieke issues
+                </span>
+                <span class="stat-item warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${pageData.issues.filter(i => i.type === 'warning').length} Waarschuwingen
+                </span>
+            </div>
+        </div>
+    `;
 }
 
 // Load and display page content with multiple fallback methods

@@ -3850,6 +3850,18 @@ body {
     background: rgba(107, 114, 128, 0.3);
 }
 
+/* Clickable Row Styling */
+.clickable-row {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clickable-row:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .no-data {
     text-align: center;
     padding: 40px 20px;
@@ -3882,6 +3894,209 @@ body {
     
     .pages-table {
         min-width: 800px;
+    }
+}
+
+/* Page Issues Section in Modal */
+.page-issues-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.issues-header h4 {
+    color: white;
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.issues-header i {
+    color: #f59e0b;
+}
+
+.issues-content {
+    margin-top: 16px;
+}
+
+.loading-issues {
+    text-align: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.loading-issues i {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    color: #60a5fa;
+}
+
+.no-issues {
+    text-align: center;
+    padding: 20px;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.no-issues.success {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.no-issues i {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: #60a5fa;
+}
+
+.no-issues.success i {
+    color: #22c55e;
+}
+
+.no-issues p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.issues-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.issue-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 4px solid;
+}
+
+.issue-item.error {
+    border-left-color: #ef4444;
+}
+
+.issue-item.warning {
+    border-left-color: #f59e0b;
+}
+
+.issue-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.issue-header i {
+    font-size: 1.2rem;
+}
+
+.issue-item.error .issue-header i {
+    color: #ef4444;
+}
+
+.issue-item.warning .issue-header i {
+    color: #f59e0b;
+}
+
+.issue-message {
+    flex: 1;
+    font-weight: 600;
+    color: white;
+}
+
+.issue-type-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.issue-type-badge.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.issue-type-badge.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.issue-description {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.issue-recommendations {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+}
+
+.issue-recommendations strong {
+    color: white;
+}
+
+.issue-recommendations ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+}
+
+.issue-recommendations li {
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.issues-summary {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-stats {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.stat-item.error {
+    color: #ef4444;
+}
+
+.stat-item.warning {
+    color: #f59e0b;
+}
+
+/* Responsive Issues Section */
+@media (max-width: 768px) {
+    .page-issues-section {
+        padding: 16px;
+        margin-top: 20px;
+    }
+    
+    .issue-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .summary-stats {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
     }
 }
 

@@ -3217,15 +3217,13 @@ async function generateSEOContent(url) {
         // Get original content from the left column
         const originalContent = extractOriginalContent();
         
-        // Check if API key is configured
+        // Get AI API key (always returns something, either FREE_HUGGINGFACE or OpenAI key)
         const apiKey = getAIApiKey();
-        if (!apiKey) {
-            showAIConfigurationPrompt(contentArea);
-            return;
-        }
         
         // Generate optimized content with AI
+        console.log('🤖 Starting AI generation with:', { apiKey: apiKey.substring(0, 10) + '...', url, originalContent });
         const optimizedContent = await generateWithAI(originalContent, url, apiKey);
+        console.log('✅ AI generation completed:', optimizedContent);
         
         // Display the AI-generated content
         displayOptimizedContent(contentArea, optimizedContent);
@@ -3416,48 +3414,23 @@ function showAIDemo() {
 async function generateWithAI(originalContent, url, apiKey) {
     const aiProvider = localStorage.getItem('seomax_ai_provider') || 'free';
     
+    console.log('🔍 AI Provider check:', { aiProvider, apiKey: apiKey.substring(0, 15) + '...' });
+    
     if (apiKey === 'FREE_HUGGINGFACE' || aiProvider === 'free') {
+        console.log('📱 Using FREE AI generation');
         return await generateWithHuggingFace(originalContent, url);
     } else {
+        console.log('🚀 Using OpenAI API generation');
         return await generateWithOpenAI(originalContent, url, apiKey);
     }
 }
 
 // Generate content with free Hugging Face API
 async function generateWithHuggingFace(originalContent, url) {
-    const prompt = `Optimaliseer deze SEO content:
-Title: ${originalContent.title}
-Meta: ${originalContent.metaDesc}
-H1: ${originalContent.h1}
-
-Maak betere versies voor SEO.`;
-
-    try {
-        // Use a free text generation model
-        const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                inputs: prompt,
-                parameters: {
-                    max_length: 200,
-                    temperature: 0.7
-                }
-            })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            // Process the response and create optimized content
-            return createOptimizedContentFromResponse(originalContent, data);
-        }
-    } catch (error) {
-        console.log('Hugging Face API error, using smart fallback:', error);
-    }
+    console.log('Using free AI generation with smart optimization');
     
-    // Smart fallback with basic SEO optimization
+    // Since free Hugging Face API has limitations, we'll use our enhanced smart fallback
+    // This provides better results than unreliable free API calls
     return createSmartOptimizedContent(originalContent, url);
 }
 
@@ -4330,4 +4303,38 @@ function showSuccessNotification(message) {
 function getAIProviderName() {
     const provider = localStorage.getItem('seomax_ai_provider') || 'free';
     return provider === 'free' ? 'Gratis AI (Smart SEO)' : 'OpenAI GPT';
+}
+
+// Test AI functionality (for debugging)
+async function testAIFunctionality() {
+    console.log('🧪 Testing AI functionality...');
+    
+    const testContent = {
+        title: 'Test Website',
+        metaDesc: 'Test meta description',
+        h1: 'Test H1',
+        h2s: ['Test H2'],
+        paragraphs: ['Test paragraph content']
+    };
+    
+    const testUrl = 'https://example.com/test';
+    
+    try {
+        const apiKey = getAIApiKey();
+        console.log('🔑 API Key:', apiKey);
+        
+        const result = await generateWithAI(testContent, testUrl, apiKey);
+        console.log('✅ AI Test Result:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('❌ AI Test Failed:', error);
+        return null;
+    }
+}
+
+// Add test button to console (for debugging)
+if (typeof window !== 'undefined') {
+    window.testAI = testAIFunctionality;
+    console.log('🔧 Debug: Type "testAI()" in console to test AI functionality');
 }

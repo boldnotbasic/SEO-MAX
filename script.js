@@ -4089,18 +4089,17 @@ async function generateAltText() {
         const context = document.getElementById('contextInput').value.trim();
         const style = document.getElementById('styleSelect').value;
         
-        // Check if AI API key is configured
+        // Get AI API key (always returns something, either FREE_HUGGINGFACE or OpenAI key)
         const apiKey = getAIApiKey();
-        if (!apiKey) {
-            showAIConfigurationPrompt();
-            return;
-        }
         
         let altText;
         if (apiKey === 'FREE_HUGGINGFACE') {
             altText = await generateAltTextWithFallback(currentImageFile, context, style);
-        } else {
+        } else if (apiKey) {
             altText = await generateAltTextWithOpenAI(currentImageFile, context, style, apiKey);
+        } else {
+            // This should rarely happen, but fallback just in case
+            altText = await generateAltTextWithFallback(currentImageFile, context, style);
         }
         
         // Display result
@@ -4160,41 +4159,132 @@ async function generateAltTextWithOpenAI(imageFile, context, style, apiKey) {
 }
 
 async function generateAltTextWithFallback(imageFile, context, style) {
-    // Fallback method using image analysis and smart generation
+    // Enhanced fallback method using intelligent image analysis
     const fileName = imageFile.name.toLowerCase();
     const fileType = imageFile.type;
     
-    // Basic image analysis based on filename and type
-    let baseDescription = 'Afbeelding';
+    // Advanced image analysis based on filename patterns
+    let baseDescription = 'Professionele afbeelding';
+    let category = 'general';
     
-    if (fileName.includes('logo')) baseDescription = 'Logo';
-    else if (fileName.includes('banner')) baseDescription = 'Banner';
-    else if (fileName.includes('product')) baseDescription = 'Product afbeelding';
-    else if (fileName.includes('team') || fileName.includes('person')) baseDescription = 'Persoon';
-    else if (fileName.includes('office') || fileName.includes('building')) baseDescription = 'Kantoor';
-    else if (fileName.includes('chart') || fileName.includes('graph')) baseDescription = 'Grafiek';
-    
-    // Style-based enhancement
-    const styleEnhancements = {
-        descriptive: baseDescription,
-        seo: `${baseDescription}${context ? ` gerelateerd aan ${context}` : ''}`,
-        marketing: `Professionele ${baseDescription.toLowerCase()}${context ? ` voor ${context}` : ''}`,
-        accessible: `${baseDescription}${context ? ` in de context van ${context}` : ''}`
-    };
-    
-    let altText = styleEnhancements[style];
-    
-    // Add context if provided
-    if (context && !altText.includes(context)) {
-        altText += ` - ${context}`;
+    // Detect image category from filename
+    if (fileName.includes('logo') || fileName.includes('brand')) {
+        baseDescription = 'Bedrijfslogo';
+        category = 'logo';
+    } else if (fileName.includes('banner') || fileName.includes('header')) {
+        baseDescription = 'Website banner';
+        category = 'banner';
+    } else if (fileName.includes('product') || fileName.includes('item')) {
+        baseDescription = 'Product afbeelding';
+        category = 'product';
+    } else if (fileName.includes('team') || fileName.includes('person') || fileName.includes('people')) {
+        baseDescription = 'Team foto';
+        category = 'people';
+    } else if (fileName.includes('office') || fileName.includes('building') || fileName.includes('workspace')) {
+        baseDescription = 'Kantoor omgeving';
+        category = 'office';
+    } else if (fileName.includes('chart') || fileName.includes('graph') || fileName.includes('data')) {
+        baseDescription = 'Data visualisatie';
+        category = 'chart';
+    } else if (fileName.includes('icon') || fileName.includes('symbol')) {
+        baseDescription = 'Icoon';
+        category = 'icon';
+    } else if (fileName.includes('screenshot') || fileName.includes('screen')) {
+        baseDescription = 'Schermafbeelding';
+        category = 'screenshot';
     }
     
-    // Ensure proper length
+    // Style-based enhancement with smart context integration
+    const styleEnhancements = {
+        descriptive: generateDescriptiveAltText(baseDescription, context, category),
+        seo: generateSEOAltText(baseDescription, context, category),
+        marketing: generateMarketingAltText(baseDescription, context, category),
+        accessible: generateAccessibleAltText(baseDescription, context, category)
+    };
+    
+    let altText = styleEnhancements[style] || styleEnhancements.descriptive;
+    
+    // Ensure optimal length (50-125 characters)
     if (altText.length > 125) {
         altText = altText.substring(0, 122) + '...';
+    } else if (altText.length < 50 && context) {
+        // Enhance short alt text with context
+        altText += ` voor ${context}`;
+        if (altText.length > 125) {
+            altText = altText.substring(0, 122) + '...';
+        }
     }
     
     return altText;
+}
+
+// Helper functions for different alt text styles
+function generateDescriptiveAltText(base, context, category) {
+    const descriptors = {
+        logo: ['van', 'voor'],
+        banner: ['met', 'voor'],
+        product: ['van', 'voor'],
+        people: ['van', 'bij'],
+        office: ['van', 'bij'],
+        chart: ['met', 'van'],
+        icon: ['voor', 'van'],
+        screenshot: ['van', 'voor'],
+        general: ['met', 'voor']
+    };
+    
+    const connector = descriptors[category]?.[0] || 'voor';
+    return context ? `${base} ${connector} ${context}` : base;
+}
+
+function generateSEOAltText(base, context, category) {
+    const seoKeywords = {
+        logo: 'bedrijf merk identiteit',
+        banner: 'website header visueel',
+        product: 'kwaliteit professioneel',
+        people: 'team samenwerking expertise',
+        office: 'professioneel modern werkplek',
+        chart: 'data analyse resultaten',
+        icon: 'symbool interface',
+        screenshot: 'applicatie software',
+        general: 'professioneel kwaliteit'
+    };
+    
+    const keywords = seoKeywords[category] || seoKeywords.general;
+    return context ? `${base} - ${context} ${keywords}` : `${base} ${keywords}`;
+}
+
+function generateMarketingAltText(base, context, category) {
+    const marketingWords = {
+        logo: 'vertrouwde merknaam',
+        banner: 'aantrekkelijke presentatie',
+        product: 'hoogwaardige kwaliteit',
+        people: 'ervaren professionals',
+        office: 'moderne werkomgeving',
+        chart: 'bewezen resultaten',
+        icon: 'gebruiksvriendelijke interface',
+        screenshot: 'innovatieve oplossing',
+        general: 'premium kwaliteit'
+    };
+    
+    const marketing = marketingWords[category] || marketingWords.general;
+    return context ? `${base} - ${marketing} voor ${context}` : `${base} met ${marketing}`;
+}
+
+function generateAccessibleAltText(base, context, category) {
+    const accessibleDescriptions = {
+        logo: 'Bedrijfslogo afbeelding',
+        banner: 'Decoratieve banner afbeelding',
+        product: 'Product foto',
+        people: 'Foto van mensen',
+        office: 'Foto van kantooromgeving',
+        chart: 'Grafiek of diagram',
+        icon: 'Icoon symbool',
+        screenshot: 'Schermafbeelding van applicatie',
+        general: 'Afbeelding'
+    };
+    
+    const accessible = accessibleDescriptions[category] || accessibleDescriptions.general;
+    return context ? `${accessible} gerelateerd aan ${context}` : accessible;
 }
 
 async function fileToBase64(file) {

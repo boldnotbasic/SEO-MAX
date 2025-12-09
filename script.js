@@ -2725,70 +2725,209 @@ async function showPageContentModal(url, score) {
     loadPageContent(url);
 }
 
-// Load and display page content
+// Load and display page content with multiple fallback methods
 async function loadPageContent(url) {
     const contentArea = document.querySelector('.content-column.original .content-area');
     if (!contentArea) return;
     
-    try {
-        const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // Extract key SEO elements
-        const title = doc.querySelector('title')?.textContent || 'Geen title gevonden';
-        const metaDesc = doc.querySelector('meta[name="description"]')?.getAttribute('content') || 'Geen meta description gevonden';
-        const h1 = doc.querySelector('h1')?.textContent || 'Geen H1 gevonden';
-        const h2s = Array.from(doc.querySelectorAll('h2')).map(h => h.textContent).slice(0, 5);
-        
-        // Extract main content (paragraphs)
-        const paragraphs = Array.from(doc.querySelectorAll('p'))
-            .map(p => p.textContent.trim())
-            .filter(text => text.length > 50)
-            .slice(0, 5);
-        
-        contentArea.innerHTML = `
-            <div class="content-section">
-                <h5><i class="fas fa-heading"></i> Title Tag</h5>
-                <div class="content-item">${title}</div>
-            </div>
-            
-            <div class="content-section">
-                <h5><i class="fas fa-paragraph"></i> Meta Description</h5>
-                <div class="content-item">${metaDesc}</div>
-            </div>
-            
-            <div class="content-section">
-                <h5><i class="fas fa-header"></i> H1 Tag</h5>
-                <div class="content-item">${h1}</div>
-            </div>
-            
-            ${h2s.length > 0 ? `
-            <div class="content-section">
-                <h5><i class="fas fa-list"></i> H2 Tags</h5>
-                ${h2s.map(h2 => `<div class="content-item">${h2}</div>`).join('')}
-            </div>
-            ` : ''}
-            
-            ${paragraphs.length > 0 ? `
-            <div class="content-section">
-                <h5><i class="fas fa-align-left"></i> Hoofdcontent</h5>
-                ${paragraphs.map(p => `<div class="content-item">${p.substring(0, 200)}${p.length > 200 ? '...' : ''}</div>`).join('')}
-            </div>
-            ` : ''}
-        `;
-        
-    } catch (error) {
-        console.error('Error loading page content:', error);
-        contentArea.innerHTML = `
-            <div class="error-content">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Fout bij laden van content: ${error.message}</p>
-                <p>Probeer de pagina direct te bezoeken: <a href="${url}" target="_blank">${url}</a></p>
-            </div>
-        `;
+    // Try multiple methods to fetch content
+    const methods = [
+        () => fetchWithCORSProxy(url, 'https://api.allorigins.win/raw?url='),
+        () => fetchWithCORSProxy(url, 'https://cors-anywhere.herokuapp.com/'),
+        () => fetchWithCORSProxy(url, 'https://thingproxy.freeboard.io/fetch/'),
+        () => fetchDirectly(url),
+        () => generateMockContent(url)
+    ];
+    
+    for (let i = 0; i < methods.length; i++) {
+        try {
+            console.log(`Trying method ${i + 1} for ${url}`);
+            const content = await methods[i]();
+            if (content) {
+                displayPageContent(contentArea, content, url);
+                return;
+            }
+        } catch (error) {
+            console.log(`Method ${i + 1} failed:`, error.message);
+            if (i === methods.length - 1) {
+                // Last method failed, show error with manual input option
+                showContentError(contentArea, url, error);
+            }
+        }
     }
+}
+
+// Fetch with CORS proxy
+async function fetchWithCORSProxy(url, proxyUrl) {
+    const response = await fetch(`${proxyUrl}${encodeURIComponent(url)}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    return extractContentFromDOM(doc);
+}
+
+// Try direct fetch (will fail due to CORS but worth trying)
+async function fetchDirectly(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    return extractContentFromDOM(doc);
+}
+
+// Generate mock content based on URL analysis
+function generateMockContent(url) {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.replace('www.', '');
+    const pathParts = urlObj.pathname.split('/').filter(p => p.length > 0);
+    
+    // Generate realistic content based on URL structure
+    const title = pathParts.length > 0 
+        ? `${pathParts[pathParts.length - 1].replace(/-/g, ' ')} | ${domain}`
+        : `Welkom bij ${domain}`;
+    
+    const metaDesc = `Ontdek ${pathParts.join(', ')} bij ${domain}. Professionele oplossingen en diensten voor al uw behoeften.`;
+    
+    const h1 = pathParts.length > 0 
+        ? pathParts[pathParts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        : `Welkom bij ${domain}`;
+    
+    return {
+        title,
+        metaDesc,
+        h1,
+        h2s: [`Over ${h1}`, `Waarom kiezen voor ${domain}`, 'Contact & Informatie'],
+        paragraphs: [
+            `${domain} biedt professionele oplossingen voor ${pathParts.join(', ')}.`,
+            `Met jarenlange ervaring helpen wij u met al uw behoeften op het gebied van ${h1.toLowerCase()}.`,
+            `Neem contact op voor meer informatie over onze diensten en mogelijkheden.`
+        ],
+        isGenerated: true
+    };
+}
+
+// Extract content from DOM
+function extractContentFromDOM(doc) {
+    const title = doc.querySelector('title')?.textContent || 'Geen title gevonden';
+    const metaDesc = doc.querySelector('meta[name="description"]')?.getAttribute('content') || 'Geen meta description gevonden';
+    const h1 = doc.querySelector('h1')?.textContent || 'Geen H1 gevonden';
+    const h2s = Array.from(doc.querySelectorAll('h2')).map(h => h.textContent.trim()).filter(h => h.length > 0).slice(0, 5);
+    
+    // Extract main content (paragraphs)
+    const paragraphs = Array.from(doc.querySelectorAll('p'))
+        .map(p => p.textContent.trim())
+        .filter(text => text.length > 50)
+        .slice(0, 5);
+    
+    return { title, metaDesc, h1, h2s, paragraphs, isGenerated: false };
+}
+
+// Display page content
+function displayPageContent(contentArea, content, url) {
+    const generatedNotice = content.isGenerated ? `
+        <div class="generated-notice">
+            <i class="fas fa-info-circle"></i>
+            <p><strong>Gegenereerde Content</strong> - Kon pagina niet laden, content is gegenereerd op basis van URL analyse</p>
+            <button onclick="manualContentInput('${url}')" class="manual-input-btn">
+                <i class="fas fa-edit"></i> Handmatig Invoeren
+            </button>
+        </div>
+    ` : '';
+    
+    contentArea.innerHTML = `
+        ${generatedNotice}
+        
+        <div class="content-section">
+            <h5><i class="fas fa-heading"></i> Title Tag</h5>
+            <div class="content-item">${content.title}</div>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-paragraph"></i> Meta Description</h5>
+            <div class="content-item">${content.metaDesc}</div>
+        </div>
+        
+        <div class="content-section">
+            <h5><i class="fas fa-header"></i> H1 Tag</h5>
+            <div class="content-item">${content.h1}</div>
+        </div>
+        
+        ${content.h2s && content.h2s.length > 0 ? `
+        <div class="content-section">
+            <h5><i class="fas fa-list"></i> H2 Tags</h5>
+            ${content.h2s.map(h2 => `<div class="content-item">${h2}</div>`).join('')}
+        </div>
+        ` : ''}
+        
+        ${content.paragraphs && content.paragraphs.length > 0 ? `
+        <div class="content-section">
+            <h5><i class="fas fa-align-left"></i> Hoofdcontent</h5>
+            ${content.paragraphs.map(p => `<div class="content-item">${p.substring(0, 200)}${p.length > 200 ? '...' : ''}</div>`).join('')}
+        </div>
+        ` : ''}
+    `;
+}
+
+// Show content error with manual input option
+function showContentError(contentArea, url, error) {
+    contentArea.innerHTML = `
+        <div class="error-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p><strong>Kon pagina content niet laden</strong></p>
+            <p class="error-details">Reden: CORS blokkering door website</p>
+            
+            <div class="error-solutions">
+                <button onclick="manualContentInput('${url}')" class="solution-btn primary">
+                    <i class="fas fa-edit"></i> Handmatig Invoeren
+                </button>
+                <button onclick="openPageInNewTab('${url}')" class="solution-btn secondary">
+                    <i class="fas fa-external-link-alt"></i> Pagina Openen
+                </button>
+                <button onclick="loadPageContent('${url}')" class="solution-btn secondary">
+                    <i class="fas fa-redo"></i> Opnieuw Proberen
+                </button>
+            </div>
+            
+            <div class="error-help">
+                <p><strong>💡 Tip:</strong> Kopieer de title, meta description en H1 van de pagina en plak ze handmatig in.</p>
+            </div>
+        </div>
+    `;
+}
+
+// Manual content input
+function manualContentInput(url) {
+    const title = prompt('Voer de title tag in van de pagina:');
+    if (!title) return;
+    
+    const metaDesc = prompt('Voer de meta description in:');
+    const h1 = prompt('Voer de H1 tag in:');
+    
+    const content = {
+        title: title || 'Handmatig ingevoerde title',
+        metaDesc: metaDesc || 'Handmatig ingevoerde meta description',
+        h1: h1 || 'Handmatig ingevoerde H1',
+        h2s: [],
+        paragraphs: [],
+        isGenerated: false
+    };
+    
+    const contentArea = document.querySelector('.content-column.original .content-area');
+    if (contentArea) {
+        displayPageContent(contentArea, content, url);
+        analysisStorage.showSaveNotification('Content handmatig ingevoerd!');
+    }
+}
+
+// Open page in new tab
+function openPageInNewTab(url) {
+    window.open(url, '_blank');
 }
 
 // Generate AI-optimized SEO content with real AI integration

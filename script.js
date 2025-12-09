@@ -1514,6 +1514,10 @@ class SitewideAnalyzer {
             keyword: keyword,
             results: results,
             score: score,
+            // Add direct access to common fields for table display
+            title: results.title?.content || 'Geen title',
+            h1: results.h1?.content || 'Geen H1',
+            metaDescription: results.metaDescription?.content || 'Geen meta description',
             timestamp: new Date().toISOString(),
             issues: this.extractPageIssues(results)
         };
@@ -2442,6 +2446,16 @@ function displaySitewideTable(pages) {
     
     tableBody.innerHTML = pages.map(page => {
         const shortUrl = getShortUrl(page.url);
+        
+        // Debug: log page data structure
+        console.log('Page data for', page.url, ':', {
+            title: page.title,
+            h1: page.h1,
+            metaDescription: page.metaDescription,
+            results: page.results
+        });
+        
+        // Extract data with fallbacks
         const title = page.title || 'Geen title';
         const h1 = page.h1 || 'Geen H1';
         const metaDesc = page.metaDescription || 'Geen meta description';

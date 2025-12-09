@@ -2,10 +2,26 @@ class SEOChecker {
     constructor() {
         this.results = {};
         this.keyword = '';
+        this.cache = new Map(); // Add caching for better performance
+        this.cacheExpiry = 5 * 60 * 1000; // 5 minutes cache
     }
 
     async analyzeWebsite(url, keyword = '') {
         this.keyword = keyword.toLowerCase();
+        
+        // Clean expired cache entries periodically
+        if (Math.random() < 0.1) { // 10% chance to clean cache
+            this.cleanCache();
+        }
+        
+        // Check cache first
+        const cacheKey = `${url}-${keyword}`;
+        const cached = this.cache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+            console.log('Using cached results for:', url);
+            this.results = cached.results;
+            return this.results;
+        }
         
         try {
             const response = await this.fetchWithCORS(url);
@@ -26,9 +42,25 @@ class SEOChecker {
                 urlStructure: this.analyzeURL(url)
             };
 
+            // Cache the results
+            this.cache.set(cacheKey, {
+                results: this.results,
+                timestamp: Date.now()
+            });
+
             return this.results;
         } catch (error) {
             throw new Error(`Fout bij analyseren: ${error.message}`);
+        }
+    }
+
+    // Clean expired cache entries
+    cleanCache() {
+        const now = Date.now();
+        for (const [key, value] of this.cache.entries()) {
+            if (now - value.timestamp > this.cacheExpiry) {
+                this.cache.delete(key);
+            }
         }
     }
 
@@ -323,7 +355,7 @@ async function analyzeWebsite() {
     const keyword = keywordInput.value.trim();
 
     if (!url) {
-        alert('Voer een geldige URL in');
+        showErrorMessage('URL Vereist', 'Voer een geldige URL in om te beginnen met de SEO analyse');
         return;
     }
 

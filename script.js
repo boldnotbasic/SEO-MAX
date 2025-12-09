@@ -4135,130 +4135,158 @@ async function generateAltTextWithFallback(imageFile, context, style) {
     // Enhanced fallback method using intelligent image analysis
     const fileName = imageFile.name.toLowerCase();
     const fileType = imageFile.type;
+    const fileSize = imageFile.size;
     
-    // Advanced image analysis based on filename patterns
-    let baseDescription = 'Professionele afbeelding';
+    console.log('🖼️ Analyzing image:', { fileName, fileType, fileSize, context, style });
+    
+    // Advanced image analysis based on multiple factors
+    let baseDescription = '';
     let category = 'general';
+    let confidence = 0;
     
-    // Detect image category from filename
-    if (fileName.includes('logo') || fileName.includes('brand')) {
-        baseDescription = 'Bedrijfslogo';
-        category = 'logo';
-    } else if (fileName.includes('banner') || fileName.includes('header')) {
-        baseDescription = 'Website banner';
-        category = 'banner';
-    } else if (fileName.includes('product') || fileName.includes('item')) {
-        baseDescription = 'Product afbeelding';
-        category = 'product';
-    } else if (fileName.includes('team') || fileName.includes('person') || fileName.includes('people')) {
-        baseDescription = 'Team foto';
-        category = 'people';
-    } else if (fileName.includes('office') || fileName.includes('building') || fileName.includes('workspace')) {
-        baseDescription = 'Kantoor omgeving';
-        category = 'office';
-    } else if (fileName.includes('chart') || fileName.includes('graph') || fileName.includes('data')) {
-        baseDescription = 'Data visualisatie';
-        category = 'chart';
-    } else if (fileName.includes('icon') || fileName.includes('symbol')) {
-        baseDescription = 'Icoon';
-        category = 'icon';
-    } else if (fileName.includes('screenshot') || fileName.includes('screen')) {
-        baseDescription = 'Schermafbeelding';
-        category = 'screenshot';
+    // Comprehensive filename analysis
+    const patterns = [
+        { keywords: ['logo', 'brand', 'mark'], description: 'Bedrijfslogo', category: 'logo', confidence: 0.9 },
+        { keywords: ['banner', 'header', 'hero'], description: 'Website banner', category: 'banner', confidence: 0.9 },
+        { keywords: ['product', 'item', 'shop'], description: 'Product foto', category: 'product', confidence: 0.8 },
+        { keywords: ['team', 'person', 'people', 'staff'], description: 'Team foto', category: 'people', confidence: 0.8 },
+        { keywords: ['office', 'building', 'workspace', 'kantoor'], description: 'Kantoor omgeving', category: 'office', confidence: 0.8 },
+        { keywords: ['chart', 'graph', 'data', 'analytics'], description: 'Data visualisatie', category: 'chart', confidence: 0.9 },
+        { keywords: ['icon', 'symbol', 'pictogram'], description: 'Icoon', category: 'icon', confidence: 0.9 },
+        { keywords: ['screenshot', 'screen', 'capture'], description: 'Schermafbeelding', category: 'screenshot', confidence: 0.9 },
+        { keywords: ['photo', 'image', 'pic'], description: 'Foto', category: 'photo', confidence: 0.5 },
+        { keywords: ['bg', 'background', 'achtergrond'], description: 'Achtergrond afbeelding', category: 'background', confidence: 0.7 },
+        { keywords: ['button', 'btn', 'knop'], description: 'Interface element', category: 'ui', confidence: 0.8 },
+        { keywords: ['avatar', 'profile', 'profiel'], description: 'Profielafbeelding', category: 'avatar', confidence: 0.8 }
+    ];
+    
+    // Find best matching pattern
+    for (const pattern of patterns) {
+        const matches = pattern.keywords.filter(keyword => fileName.includes(keyword));
+        if (matches.length > 0 && pattern.confidence > confidence) {
+            baseDescription = pattern.description;
+            category = pattern.category;
+            confidence = pattern.confidence;
+        }
     }
     
-    // Style-based enhancement with smart context integration
-    const styleEnhancements = {
-        descriptive: generateDescriptiveAltText(baseDescription, context, category),
-        seo: generateSEOAltText(baseDescription, context, category),
-        marketing: generateMarketingAltText(baseDescription, context, category),
-        accessible: generateAccessibleAltText(baseDescription, context, category)
-    };
+    // Fallback to generic descriptions with variation
+    if (!baseDescription) {
+        const genericDescriptions = [
+            'Afbeelding',
+            'Visueel element', 
+            'Grafische content',
+            'Digitale afbeelding',
+            'Media element'
+        ];
+        baseDescription = genericDescriptions[Math.floor(Math.random() * genericDescriptions.length)];
+    }
     
-    let altText = styleEnhancements[style] || styleEnhancements.descriptive;
+    // Add context-aware enhancements
+    if (context) {
+        baseDescription = enhanceWithContext(baseDescription, context, category);
+    }
+    
+    // Generate style-specific alt text with more variation
+    let altText = generateStyledAltText(baseDescription, context, style, category, fileName);
+    
+    // Add randomized professional touches
+    altText = addProfessionalVariation(altText, style, category);
     
     // Ensure optimal length (50-125 characters)
     if (altText.length > 125) {
         altText = altText.substring(0, 122) + '...';
-    } else if (altText.length < 50 && context) {
-        // Enhance short alt text with context
-        altText += ` voor ${context}`;
+    } else if (altText.length < 50) {
+        altText = expandAltText(altText, context, style, category);
         if (altText.length > 125) {
             altText = altText.substring(0, 122) + '...';
         }
     }
     
+    console.log('✅ Generated alt text:', altText);
     return altText;
 }
 
-// Helper functions for different alt text styles
-function generateDescriptiveAltText(base, context, category) {
-    const descriptors = {
-        logo: ['van', 'voor'],
-        banner: ['met', 'voor'],
-        product: ['van', 'voor'],
-        people: ['van', 'bij'],
-        office: ['van', 'bij'],
-        chart: ['met', 'van'],
-        icon: ['voor', 'van'],
-        screenshot: ['van', 'voor'],
-        general: ['met', 'voor']
+// Enhanced context integration
+function enhanceWithContext(base, context, category) {
+    const contextEnhancements = {
+        logo: `${base} van ${context}`,
+        banner: `${base} voor ${context}`,
+        product: `${context} ${base.toLowerCase()}`,
+        people: `${base} bij ${context}`,
+        office: `${context} ${base.toLowerCase()}`,
+        chart: `${base} over ${context}`,
+        icon: `${context} ${base.toLowerCase()}`,
+        screenshot: `${base} van ${context}`,
+        general: `${base} gerelateerd aan ${context}`
     };
     
-    const connector = descriptors[category]?.[0] || 'voor';
-    return context ? `${base} ${connector} ${context}` : base;
+    return contextEnhancements[category] || `${base} - ${context}`;
 }
 
-function generateSEOAltText(base, context, category) {
-    const seoKeywords = {
-        logo: 'bedrijf merk identiteit',
-        banner: 'website header visueel',
-        product: 'kwaliteit professioneel',
-        people: 'team samenwerking expertise',
-        office: 'professioneel modern werkplek',
-        chart: 'data analyse resultaten',
-        icon: 'symbool interface',
-        screenshot: 'applicatie software',
-        general: 'professioneel kwaliteit'
+// Generate styled alt text with more variation
+function generateStyledAltText(base, context, style, category, fileName) {
+    const variations = {
+        descriptive: [
+            base,
+            `Gedetailleerde ${base.toLowerCase()}`,
+            `Hoogwaardige ${base.toLowerCase()}`,
+            `Professionele ${base.toLowerCase()}`
+        ],
+        seo: [
+            `${base} - SEO geoptimaliseerd`,
+            `${base} voor zoekmachines`,
+            `Zoekmachinevriendelijke ${base.toLowerCase()}`,
+            `${base} met keywords`
+        ],
+        marketing: [
+            `Aantrekkelijke ${base.toLowerCase()}`,
+            `Overtuigende ${base.toLowerCase()}`,
+            `Commerciële ${base.toLowerCase()}`,
+            `Marketing ${base.toLowerCase()}`
+        ],
+        accessible: [
+            `${base} voor screenreaders`,
+            `Toegankelijke ${base.toLowerCase()}`,
+            `Beschrijvende ${base.toLowerCase()}`,
+            base
+        ]
     };
     
-    const keywords = seoKeywords[category] || seoKeywords.general;
-    return context ? `${base} - ${context} ${keywords}` : `${base} ${keywords}`;
+    const styleVariations = variations[style] || variations.descriptive;
+    return styleVariations[Math.floor(Math.random() * styleVariations.length)];
 }
 
-function generateMarketingAltText(base, context, category) {
-    const marketingWords = {
-        logo: 'vertrouwde merknaam',
-        banner: 'aantrekkelijke presentatie',
-        product: 'hoogwaardige kwaliteit',
-        people: 'ervaren professionals',
-        office: 'moderne werkomgeving',
-        chart: 'bewezen resultaten',
-        icon: 'gebruiksvriendelijke interface',
-        screenshot: 'innovatieve oplossing',
-        general: 'premium kwaliteit'
+// Add professional variation to avoid repetitive results
+function addProfessionalVariation(altText, style, category) {
+    const professionalTouches = {
+        descriptive: ['', ' met aandacht voor detail', ' van hoge kwaliteit', ' zorgvuldig samengesteld'],
+        seo: ['', ' geoptimaliseerd voor vindbaarheid', ' met relevante trefwoorden', ' SEO-vriendelijk'],
+        marketing: ['', ' die aandacht trekt', ' voor maximale impact', ' commercieel aantrekkelijk'],
+        accessible: ['', ' duidelijk beschreven', ' toegankelijk voor iedereen', ' screenreader vriendelijk']
     };
     
-    const marketing = marketingWords[category] || marketingWords.general;
-    return context ? `${base} - ${marketing} voor ${context}` : `${base} met ${marketing}`;
+    const touches = professionalTouches[style] || professionalTouches.descriptive;
+    const randomTouch = touches[Math.floor(Math.random() * touches.length)];
+    
+    return altText + randomTouch;
 }
 
-function generateAccessibleAltText(base, context, category) {
-    const accessibleDescriptions = {
-        logo: 'Bedrijfslogo afbeelding',
-        banner: 'Decoratieve banner afbeelding',
-        product: 'Product foto',
-        people: 'Foto van mensen',
-        office: 'Foto van kantooromgeving',
-        chart: 'Grafiek of diagram',
-        icon: 'Icoon symbool',
-        screenshot: 'Schermafbeelding van applicatie',
-        general: 'Afbeelding'
+// Expand short alt text
+function expandAltText(altText, context, style, category) {
+    const expansions = {
+        descriptive: [' met professionele uitstraling', ' van hoogwaardige kwaliteit', ' zorgvuldig ontworpen'],
+        seo: [' geoptimaliseerd voor zoekmachines', ' met relevante keywords', ' SEO-vriendelijk vormgegeven'],
+        marketing: [' die de aandacht trekt', ' commercieel aantrekkelijk', ' voor maximale conversie'],
+        accessible: [' duidelijk en toegankelijk', ' geschikt voor alle gebruikers', ' volledig beschreven']
     };
     
-    const accessible = accessibleDescriptions[category] || accessibleDescriptions.general;
-    return context ? `${accessible} gerelateerd aan ${context}` : accessible;
+    const styleExpansions = expansions[style] || expansions.descriptive;
+    const randomExpansion = styleExpansions[Math.floor(Math.random() * styleExpansions.length)];
+    
+    return altText + randomExpansion;
 }
+
 
 async function fileToBase64(file) {
     return new Promise((resolve, reject) => {
